@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 def train_model(model, train_dataset, val_dataset, n_epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.L1Loss(reduction='sum').to(device)
+    criterion = nn.L1Loss(reduction='sum')#.to(device)
     history = dict(train=[], val=[])
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -13,7 +13,7 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
         train_losses = []
         for seq_true in train_dataset:
             optimizer.zero_grad()
-            seq_true = seq_true.to(device)
+            #seq_true = seq_true.to(device)
             seq_pred = model(seq_true)
             loss = criterion(seq_pred, seq_true)
             loss.backward()
@@ -23,7 +23,7 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
         model = model.eval()
         with torch.no_grad():
             for seq_true in val_dataset:
-                seq_true = seq_true.to(device)
+                #seq_true = seq_true.to(device)
                 seq_pred = model(seq_true)
                 loss = criterion(seq_pred, seq_true)
                 val_losses.append(loss.item())
