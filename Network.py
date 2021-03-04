@@ -1,3 +1,4 @@
+#https://curiousily.com/posts/time-series-anomaly-detection-using-lstm-autoencoder-with-pytorch-in-python/
 import torch.nn as nn
 class Encoder(nn.Module):
     def __init__(self, seq_len, n_features, embedding_dim=64):
