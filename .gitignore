@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# .idea cancer
+.idea
+
+# and vscode
+.vscode
+
+# mac boi
+.DS_Store
