@@ -1,12 +1,13 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import copy
 def train_model(model, train_dataset, val_dataset, n_epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.L1Loss(reduction='sum')#.to(device)
     history = dict(train=[], val=[])
 
-    best_model_wts = deepcopy(model.state_dict())
+    best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = 10000.0
     for epoch in range(1, n_epochs + 1):
         model = model.train()
