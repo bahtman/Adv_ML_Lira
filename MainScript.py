@@ -15,8 +15,8 @@ train, val = random_split(data, [n_train, n_val])
 
 model, history = train_model(
     model,
-    train_dataset,
-    val_dataset,
+    train,
+    val,
     n_epochs=150
 )
 
