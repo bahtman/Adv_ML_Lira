@@ -6,7 +6,8 @@ import copy
 data = TS_dataset()
 seq_len = len(data[0][0])#10 for vores data
 n_features = len(data[0][0][0])#1 for vores data
-model = RecurrentAutoencoder(seq_len, n_features, 128)
+model = RecurrentAutoencoder(seq_len, n_features, 64)
+print(model)
 #model = model.to(device)
 
 val_percent = 0.1
