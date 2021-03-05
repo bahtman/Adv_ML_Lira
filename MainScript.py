@@ -4,6 +4,8 @@ from Sim_Data import *
 from torch.utils.data import random_split
 
 print(labels)
+seq_len = len(timeseries)
+n_features = len(timeseries[1])#Skal vist være 10?
 model = RecurrentAutoencoder(seq_len, n_features, 128)
 #model = model.to(device)
 model, history = train_model(
