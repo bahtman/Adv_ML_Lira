@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import copy
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def train_model(model, train_dataset, val_dataset, n_epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.L1Loss(reduction='sum')#.to(device)
