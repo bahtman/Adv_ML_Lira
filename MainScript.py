@@ -2,6 +2,8 @@ from TestNetwork import *
 from TrainScript import *
 from src.dataset import *
 from torch.utils.data import random_split
+from torch.utils.data import Subset
+import math
 import copy
 data = TS_dataset()
 seq_len = len(data[0][0])#10 for vores data
@@ -14,10 +16,13 @@ val_percent = 0.1
 n_val = int(len(data) * val_percent)
 n_train = len(data) - n_val
 train, val = random_split(data, [n_train, n_val])
-
+n_val = int((len(val)*0.5))
+n_test = len(val)-n_val
+val, test = random_split(val, [n_val, n_test])
+train_uden_labels = train[:][0]
 model, history = train_model(
     model,
-    train,
+    train_uden_labels,
     val,
     n_epochs=150
 )
