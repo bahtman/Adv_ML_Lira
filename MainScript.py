@@ -1,7 +1,7 @@
 from TestNetwork import *
 from TrainScript import *
 from src.dataset import *
-from torch.utils.data import random_split
+from torch.utils.data import DataLoader, random_split
 from torch.utils.data import Subset
 import math
 import copy
@@ -14,16 +14,21 @@ print(model)
 
 val_percent = 0.1
 n_val = int(len(data) * val_percent)
-n_train = len(data) - n_val
+n_train = int(len(data) - n_val)
 train, val = random_split(data, [n_train, n_val])
-n_val = int((len(val)*0.5))
-n_test = len(val)-n_val
+# make datasets iterable
+#train_loader = DataLoader(train, batch_size=1, shuffle=True, num_workers=0, drop_last=False)
+
+n_val = int(len(val)*0.5)
+n_test = int(len(val)-n_val)
 val, test = random_split(val, [n_val, n_test])
+#val_loader = DataLoader(val, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
+#test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
 train_uden_labels = train[:][0]
 model, history = train_model(
     model,
     train_uden_labels,
     val,
-    n_epochs=150
+    n_epochs=100
 )
 
