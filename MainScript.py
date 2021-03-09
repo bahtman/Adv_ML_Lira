@@ -6,6 +6,8 @@ from torch.utils.data import Subset
 from torch.autograd import Variable
 import math
 import copy
+torch.manual_seed(0)
+torch.manual_seed(torch.initial_seed())
 data = TS_dataset()
 seq_len = len(data[0][0])#10 for vores data
 n_features = len(data[0][0][0])#1 for vores data
