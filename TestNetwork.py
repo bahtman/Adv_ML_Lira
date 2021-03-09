@@ -2,7 +2,7 @@ import torch.nn as nn
 class Encoder(nn.Module):
     def __init__(self, seq_len, n_features, embedding_dim = 64):
         super(Encoder, self).__init__()
-        #self.seq_len, self.n_features = seq_len, n_features
+        self.seq_len, self.n_features = seq_len, n_features
         self.embedding_dim, self.hidden_dim = embedding_dim, 2 * embedding_dim
         batch_size = 1
         
@@ -19,8 +19,8 @@ class Encoder(nn.Module):
         batch_first=True
         )
     def forward(self, x):
-        #batch_size = 1
-        #x = x.reshape((batch_size, self.seq_len, self.n_features))
+        batch_size = 1
+        x = x.reshape((batch_size, self.seq_len, self.n_features))
         #print(x)
 
         #x, (_,_) = self.rnn1(x)
@@ -28,7 +28,7 @@ class Encoder(nn.Module):
         #x = x.reshape((self.seq_len, self.hidden_dim))
         #x = x.view(x.size(0), -1)
         rnn_features, h = self.rnn1(x)
-        rnn_features, h = self.rnn2(x)
+        rnn_features, h = self.rnn2(rnn_features)
         #hidden_n.reshape((self.n_features, self.embedding_dim))
         #rnn_features, h
         return rnn_features, h
@@ -60,6 +60,7 @@ class Decoder(nn.Module):
         )
     def forward(self, x):
         x, h = self.rnn1(x)
+        x, h = self.rnn2(x)
         x = self.out(x)
         return x
 
@@ -71,7 +72,7 @@ class RecurrentAutoencoder(nn.Module):
         self.decoder = Decoder(seq_len, n_features, embedding_dim)#.to(device)
 
     def forward(self, x):
-        x = self.encoder(x)
+        x, h = self.encoder(x)
         x = self.decoder(x)
         return x
 
