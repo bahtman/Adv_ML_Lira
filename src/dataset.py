@@ -46,7 +46,7 @@ class TS_dataset(Dataset):
         self.data = data
         self.process_data()
         # print(signals)
-        # print(self.all_data[200,:,:], self.labels[200])
+        #print(self.all_data[200,:,:], self.labels[200])
 
 
     def process_data(self):

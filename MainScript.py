@@ -3,6 +3,7 @@ from TrainScript import *
 from src.dataset import *
 from torch.utils.data import DataLoader, random_split
 from torch.utils.data import Subset
+from torch.autograd import Variable
 import math
 import copy
 data = TS_dataset()
@@ -24,7 +25,7 @@ n_test = int(len(val)-n_val)
 val, test = random_split(val, [n_val, n_test])
 #val_loader = DataLoader(val, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
 #test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
-train_uden_labels = train[:][0]
+train_uden_labels = Variable(train[:][0])
 model, history = train_model(
     model,
     train_uden_labels,
