@@ -20,13 +20,13 @@ n_val = int(len(data) * val_percent)
 n_train = int(len(data) - n_val)
 train, val = random_split(data, [n_train, n_val])
 # make datasets iterable
-train_loader = DataLoader(train, batch_size=2, shuffle=True, num_workers=0, drop_last=False)
+train_loader = DataLoader(train, batch_size=16, shuffle=True, num_workers=0, drop_last=False)
 
 n_val = int(len(val)*0.5)
 n_test = int(len(val)-n_val)
 val, test = random_split(val, [n_val, n_test])
-val_loader = DataLoader(val, batch_size=2, shuffle=False, num_workers=0, drop_last=False)
-test_loader = DataLoader(test, batch_size=2, shuffle=False, num_workers=0, drop_last=False)
+val_loader = DataLoader(val, batch_size=16, shuffle=False, num_workers=0, drop_last=False)
+test_loader = DataLoader(test, batch_size=16, shuffle=False, num_workers=0, drop_last=False)
 model, history = train_model(
     model,
     train_loader,

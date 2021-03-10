@@ -2,7 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import copy
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 def train_model(model, train_dataset, val_dataset, n_epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.L1Loss(reduction='sum').to(device)
@@ -14,11 +17,12 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
         train_losses = []
         train_dataset_batch = iter(train_dataset)
         for i in range(len(train_dataset)):
-            sample=train_dataset_batch.next()
+            sample = train_dataset_batch.next()
+            x, y = sample
+            x = x.permute(1, 0, 2)
             optimizer.zero_grad()
-            #sample = sample.to(device)
-            seq_pred = model(sample[0].float())
-            loss = criterion(seq_pred, sample[0].float())
+            seq_pred = model(x.float())
+            loss = criterion(seq_pred, x.float())
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
@@ -26,7 +30,7 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
         model = model.eval()
         with torch.no_grad():
             for seq_true in val_dataset:
-                #seq_true = seq_true.to(device)
+                # seq_true = seq_true.to(device)
                 seq_pred = model(seq_true[0].float())
                 loss = criterion(seq_pred, seq_true[0].float())
                 val_losses.append(loss.item())
