@@ -2,6 +2,7 @@ import torch
 import argparse
 import logging
 from dataset import TS_dataset
+from network import *
 import os
 
 PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -26,11 +27,6 @@ PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
 
 import torch.nn as nn
 
-
-class MockModel(nn.Module):
-    def __init__(self, args):
-        super().__init__()
-        logging.info('boi')
 
 
 if __name__ == '__main__':
@@ -63,4 +59,4 @@ if __name__ == '__main__':
         dataset = TS_dataset(ARGS.data_dir, ARGS.time_steps)
         
 
-    model = MockModel(ARGS).to(ARGS.device)
+    model = RecurrentAutoencoder(ARGS).to(ARGS.device)
