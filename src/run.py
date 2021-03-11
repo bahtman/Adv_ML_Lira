@@ -15,7 +15,7 @@ PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
 
 # File paths
 PARSER.add_argument('--data_dir', default=None, help='Location of dataset.')
-PARSER.add_argument('--output_dir', default='./results/{}'.format(os.path.splitext(__file__)[0]))
+PARSER.add_argument('--output_dir', default='./results/')
 PARSER.add_argument('--results_file', default='results.txt', help='Filename where to store settings and test results.')
 
 # Training parameters
