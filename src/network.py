@@ -12,13 +12,11 @@ class Encoder(nn.Module):
 
         self.rnn1 = nn.LSTM(
             input_size=n_features,
-            hidden_size=self.hidden_dim,
-            num_layers=1,
+            hidden_size=self.hidden_dim
         )
         self.rnn2 = nn.LSTM(
             input_size=self.hidden_dim,
-            hidden_size=embedding_dim,
-            num_layers=1,
+            hidden_size=embedding_dim
         )
 
     def forward(self, x):
@@ -28,35 +26,34 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, seq_len, n_features, input_dim=64):
+    def __init__(self, seq_len, n_features, embedding_dim=64,latent_dim):
         super().__init__()
-        self.hidden_dim, self.n_features = 2 * input_dim, n_features
+        self.hidden_dim = 2 * embedding_dim
+        self.embedding_dim, self.n_features, self.latent_dim, self.seq_len =  embedding_dim, n_features, latent_dim, seq_len
 
-        self.out = nn.Linear(
-            in_features=input_dim,
-            out_features=2,
-            bias=False
+        self.linear = nn.Linear(
+            in_features=self.latent_dim * 2,
+            out_features= self.embedding_dim * self.seq_len
         )
 
         self.rnn1 = nn.LSTM(
-            input_size=input_dim,
-            hidden_size=input_dim,
-            num_layers=1,
+            input_size=self.embedding_dim,
+            hidden_size=self.hidden_dim
         )
         self.rnn2 = nn.LSTM(
-            input_size=input_dim,
-            hidden_size=self.hidden_dim,
-            num_layers=1,
+            input_size=self.hidden_dim,
+            hidden_size=self.n_features
         )
 
 
 
     def forward(self, z):
-        z.rsample()
+        x = z.rsample()
 
+        x = self.linear(x)
+        x = x.reshape(self.seq_len, -1, self.embedding_dim)
         x, (_, _) = self.rnn1(x)
         x, (_, state_final) = self.rnn2(x)
-        x = self.out(x)
 
         return x
 
@@ -70,7 +67,7 @@ class RecurrentAutoencoder(nn.Module):
         self.latent_dim = latent_dim
 
         self.encoder = Encoder(seq_len, n_features, embedding_dim)  # .to(device)
-        self.decoder = Decoder(seq_len, n_features, embedding_dim)  # .to(device)
+        self.decoder = Decoder(seq_len, n_features, embedding_dim, latent_dim)  # .to(device)
         self.mu_log_sigma = nn.Linear(embedding_dim * seq_len, 2*latent_dim)
 
     def forward(self, x):
