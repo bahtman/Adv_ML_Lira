@@ -5,7 +5,7 @@ import torch.distributions as d
 import logging
 
 class Encoder(nn.Module):
-    def __init__(self, seq_len, n_features, embedding_dim=64):
+    def __init__(self, seq_len, n_features, embedding_dim):
         super().__init__()
         self.seq_len, self.n_features = seq_len, n_features
         self.embedding_dim, self.hidden_dim = embedding_dim, 2 * embedding_dim
@@ -26,7 +26,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, seq_len, n_features, latent_dim, embedding_dim=64):
+    def __init__(self, seq_len, n_features, latent_dim, embedding_dim):
         super().__init__()
         self.hidden_dim = 2 * embedding_dim
         self.embedding_dim, self.n_features, self.latent_dim, self.seq_len =  embedding_dim, n_features, latent_dim, seq_len
