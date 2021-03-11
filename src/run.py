@@ -2,7 +2,7 @@ import torch
 import argparse
 import logging
 from dataset import TS_dataset
-from network import *
+from network import RecurrentAutoencoder
 import os
 
 PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
