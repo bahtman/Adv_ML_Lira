@@ -58,8 +58,9 @@ if __name__ == '__main__':
         torch.cuda.manual_seed(ARGS.seed)
 
     if ARGS.time_steps is None:
-        dataset = TS_dataset(ARGS.data_dir, ARGS.time_steps)
-    else:
         dataset = TS_dataset(ARGS.data_dir)
+    else:
+        dataset = TS_dataset(ARGS.data_dir, ARGS.time_steps)
+        
 
     model = MockModel(ARGS).to(ARGS.device)
