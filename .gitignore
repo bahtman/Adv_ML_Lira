@@ -136,3 +136,5 @@ dmypy.json
 
 # mac boi
 .DS_Store
+
+results/
