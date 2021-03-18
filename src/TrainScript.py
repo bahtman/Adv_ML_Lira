@@ -5,10 +5,15 @@ import copy
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+def elbo_loss(recon_x, x, mu, log_var):
+    criterion = nn.L1Loss(reduction='sum').to(device)
+    recon_loss = criterion(recon_x, x)
+    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    return recon_loss + KLD
 
 def train_model(model, train_dataset, val_dataset, n_epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.L1Loss(reduction='sum').to(device)
+    loss_func = elbo_loss
     history = dict(train=[], val=[])
     best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = 10000.0
@@ -16,23 +21,27 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
         model = model.train()
         train_losses = []
         train_dataset_batch = iter(train_dataset)
-        for i in range(len(train_dataset)):
+        for _ in range(len(train_dataset)):
             sample = train_dataset_batch.next()
             x, y = sample
+            x, y = x.float(), y.float()
             x = x.permute(1, 0, 2)
             optimizer.zero_grad()
-            seq_pred = model(x.float())
-            loss = criterion(seq_pred, x.float())
+            x_recon, mu, log_var = model(x)
+            loss = loss_func(x_recon, x, mu, log_var)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
         val_losses = []
         model = model.eval()
         with torch.no_grad():
-            for seq_true in val_dataset:
-                # seq_true = seq_true.to(device)
-                seq_pred = model(seq_true[0].float())
-                loss = criterion(seq_pred, seq_true[0].float())
+            val_dataset_batch = iter(val_dataset)
+            for _ in range(len(val_dataset)):
+                x, y = val_dataset_batch.next()
+                x, y = x.float(), y.float()
+                x = x.permute(1, 0, 2)
+                x_recon, mu, log_var = model(x)
+                loss = loss_func(x_recon, x, mu, log_var)
                 val_losses.append(loss.item())
         train_loss = np.mean(train_losses)
         val_loss = np.mean(val_losses)

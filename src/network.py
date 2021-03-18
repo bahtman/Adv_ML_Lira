@@ -32,7 +32,7 @@ class Decoder(nn.Module):
         self.embedding_dim, self.n_features, self.latent_dim, self.seq_len =  embedding_dim, n_features, latent_dim, seq_len
 
         self.linear = nn.Linear(
-            in_features=self.latent_dim * 2,
+            in_features=self.latent_dim,
             out_features= self.embedding_dim * self.seq_len
         )
 
@@ -45,11 +45,8 @@ class Decoder(nn.Module):
             hidden_size=self.n_features
         )
 
-
-
     def forward(self, z):
         x = z.rsample()
-
         x = self.linear(x)
         x = x.reshape(self.seq_len, -1, self.embedding_dim)
         x, (_, _) = self.rnn1(x)
@@ -59,9 +56,9 @@ class Decoder(nn.Module):
 
 
 class RecurrentAutoencoder(nn.Module):
-    def __init__(self, seq_len, n_features,ARGS):
+    def __init__(self, seq_len, n_features, ARGS):
         super().__init__()
-        logging.info('boi')
+        logging.info('Starting RecurrentAutoencoder')
         self.seq_len = seq_len
         self.n_features = n_features
         self.embedding_dim = ARGS.embedding_dim
@@ -78,4 +75,4 @@ class RecurrentAutoencoder(nn.Module):
         z = d.Normal(mu, log_sigma.exp())
 
         x_hat = self.decoder(z)
-        return x_hat
+        return x_hat, mu, log_sigma
