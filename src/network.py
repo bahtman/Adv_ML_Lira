@@ -32,7 +32,7 @@ class Decoder(nn.Module):
         self.embedding_dim, self.n_features, self.latent_dim, self.seq_len =  embedding_dim, n_features, latent_dim, seq_len
 
         self.linear = nn.Linear(
-            in_features=self.latent_dim * 2,
+            in_features=self.latent_dim,
             out_features= self.embedding_dim * self.seq_len
         )
 
