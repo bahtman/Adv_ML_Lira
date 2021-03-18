@@ -27,7 +27,7 @@ n_test = int(len(val)-n_val)
 val, test = random_split(val, [n_val, n_test])
 val_loader = DataLoader(val, batch_size=16, shuffle=False, num_workers=0, drop_last=False)
 test_loader = DataLoader(test, batch_size=16, shuffle=False, num_workers=0, drop_last=False)
-model, history = train_model(
+trained_model, history = train_model(
     model,
     train_loader,
     val_loader,
