@@ -49,7 +49,6 @@ class Decoder(nn.Module):
 
     def forward(self, z):
         x = z.rsample()
-
         x = self.linear(x)
         x = x.reshape(self.seq_len, -1, self.embedding_dim)
         x, (_, _) = self.rnn1(x)
