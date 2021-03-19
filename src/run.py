@@ -1,6 +1,7 @@
 import torch
 import argparse
 import logging
+from TestScript import test_function
 from dataset import TS_dataset
 from network import RecurrentAutoencoder
 from TrainScript import train_model
@@ -88,3 +89,6 @@ if __name__ == '__main__':
         val_loader,
         n_epochs=ARGS.n_epochs
         )
+
+    if ARGS.generate:
+        fig, axs = test_function(model, test_loader)
