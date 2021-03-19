@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 def test_function(model, test_dataset):
     Reconstructions_for_plotting = []
     test_dataset_batch = iter(test_dataset)
-    sample = test_dataset_batch.next()
     fig, axs = plt.subplots(2)
     for i in range(2):
-        Reconstructions_for_plotting.append(sample)
         sample = test_dataset_batch.next()
-        axs[i] = sample
+        sample_reconstruction = model(sample)
+        axs[i].plot(sample)
+        axs[i].plot(sample_reconstruction)
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
     #axs[0, 1].plot(test_dataset[1])
