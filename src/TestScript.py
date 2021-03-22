@@ -12,11 +12,9 @@ def test_function(model, test_dataset):
         x, y = sample
         x, y = x.float(), y.float()
         x = x.permute(1, 0, 2)
-        y = torch.squeeze(y, dim = -1)
-        print(x)
         x_recon, mu, log_var = model(x)
-        axs[i].plot(x)
-        axs[i].plot(x_recon)
+        axs[i].plot(x[:,i,0])
+        axs[i].plot(x_recon[:,i,0])
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
     #axs[0, 1].plot(test_dataset[1])
