@@ -10,6 +10,7 @@ def test_function(model, test_dataset):
         sample = test_dataset_batch.next()
         x, y = sample
         x, y = x.float(), y.float()
+        x = x.permute(1, 0, 2)
         sample_reconstruction = model(x)
         axs[i].plot(x)
         axs[i].plot(sample_reconstruction)

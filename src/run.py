@@ -91,4 +91,4 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
-        fig, axs = test_function(model, test_loader)
+        fig, axs = test_function(trained_model, test_loader)
