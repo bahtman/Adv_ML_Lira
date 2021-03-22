@@ -8,8 +8,10 @@ def test_function(model, test_dataset):
     fig, axs = plt.subplots(2)
     for i in range(2):
         sample = test_dataset_batch.next()
-        sample_reconstruction = model(sample)
-        axs[i].plot(sample)
+        x, y = sample
+        x, y = x.float(), y.float()
+        sample_reconstruction = model(x)
+        axs[i].plot(x)
         axs[i].plot(sample_reconstruction)
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
