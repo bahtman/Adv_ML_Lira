@@ -1,5 +1,6 @@
 
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
 
 def test_function(model, test_dataset):
@@ -11,9 +12,11 @@ def test_function(model, test_dataset):
         x, y = sample
         x, y = x.float(), y.float()
         x = x.permute(1, 0, 2)
-        sample_reconstruction = model(x)
+        y = torch.squeeze(y, dim = -1)
+        print(x)
+        x_recon, mu, log_var = model(x)
         axs[i].plot(x)
-        axs[i].plot(sample_reconstruction)
+        axs[i].plot(x_recon)
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
     #axs[0, 1].plot(test_dataset[1])
