@@ -15,8 +15,9 @@ def test_function(model, test_dataset, n_plots):
             x, y = x.float(), y.float()
             x = x.permute(1, 0, 2)
             x_recon, mu, log_var = model(x)
-            axs[i].plot(x[:,0,0])
-            axs[i].plot(x_recon[:,0,0])
+            axs[i].plot(x[:,0,0], label = 'Input data')
+            axs[i].plot(x_recon[:,0,0], label = 'Reconstructed data')
+            plt.legend()
             
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
@@ -47,7 +48,7 @@ def test_function(model, test_dataset, n_plots):
             ax.set(xlabel='time', ylabel='y-value :)')
 
         # Hide x labels and tick labels for top plots and y ticks for right plots.
-        for ax in axs.flat:
-            ax.label_outer()  
+#        for ax in axs.flat:
+#            ax.label_outer()  
         plt.show()
     return fig, axs
