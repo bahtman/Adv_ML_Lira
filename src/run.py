@@ -30,6 +30,7 @@ PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
 PARSER.add_argument('--latent_dim', type=int, default=2, help='Learning rate')
 PARSER.add_argument('--embedding_dim', type=int, default=64, help='Learning rate')
+PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The amount of inputs sequences and their respective reconstructions to be plotted')
 
 import torch.nn as nn
 
@@ -78,9 +79,10 @@ if __name__ == '__main__':
     n_val = int(len(val)*0.5)
     n_test = int(len(val)-n_val)
     val, test = random_split(val, [n_val, n_test])
+    print(len(test))
     train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=False)
     val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
-    test_loader = DataLoader(test, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
+    test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
 
     if ARGS.train:
         trained_model, history = train_model(
@@ -91,4 +93,4 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
-        fig, axs = test_function(trained_model, test_loader)
+        fig, axs = test_function(trained_model, test_loader, ARGS.amount_of_plots)
