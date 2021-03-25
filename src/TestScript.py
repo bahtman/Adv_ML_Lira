@@ -5,16 +5,18 @@ import matplotlib.pyplot as plt
 
 def test_function(model, test_dataset):
     Reconstructions_for_plotting = []
-    test_dataset_batch = iter(test_dataset)
-    fig, axs = plt.subplots(2)
-    for i in range(2):
-        sample = test_dataset_batch.next()
-        x, y = sample
-        x, y = x.float(), y.float()
-        x = x.permute(1, 0, 2)
-        x_recon, mu, log_var = model(x)
-        axs[i].plot(x[:,i,0])
-        axs[i].plot(x_recon[:,i,0])
+    with torch.no_grad():
+        test_dataset_batch = iter(test_dataset)
+        fig, axs = plt.subplots(2)
+        for i in range(2):
+            sample = test_dataset_batch.next()
+            x, y = sample
+            x, y = x.float(), y.float()
+            x = x.permute(1, 0, 2)
+            x_recon, mu, log_var = model(x)
+            axs[i].plot(x[:,i,0])
+            axs[i].plot(x_recon[:,i,0])
+            
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
     #axs[0, 1].plot(test_dataset[1])
@@ -40,10 +42,11 @@ def test_function(model, test_dataset):
     #axs[2,3].plot(test_dataset[11])
     #axs[2,3].plot(Reconstructions_for_plotting[11])
 
-    for ax in axs.flat:
-        ax.set(xlabel='time', ylabel='y-value :)')
+        for ax in axs.flat:
+            ax.set(xlabel='time', ylabel='y-value :)')
 
-    # Hide x labels and tick labels for top plots and y ticks for right plots.
-    for ax in axs.flat:
-        ax.label_outer()  
+        # Hide x labels and tick labels for top plots and y ticks for right plots.
+        for ax in axs.flat:
+            ax.label_outer()  
+        plt.show()
     return fig, axs
