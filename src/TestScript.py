@@ -3,19 +3,20 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-def test_function(model, test_dataset):
+def test_function(model, test_dataset, n_plots):
     Reconstructions_for_plotting = []
     with torch.no_grad():
+        print("shape of test_dataset: ", (test_dataset))
         test_dataset_batch = iter(test_dataset)
-        fig, axs = plt.subplots(2)
-        for i in range(2):
+        fig, axs = plt.subplots(n_plots)
+        for i in range(n_plots):
             sample = test_dataset_batch.next()
             x, y = sample
             x, y = x.float(), y.float()
             x = x.permute(1, 0, 2)
             x_recon, mu, log_var = model(x)
-            axs[i].plot(x[:,i,0])
-            axs[i].plot(x_recon[:,i,0])
+            axs[i].plot(x[:,0,0])
+            axs[i].plot(x_recon[:,0,0])
             
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
