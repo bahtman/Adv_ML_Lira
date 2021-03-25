@@ -17,7 +17,10 @@ def test_function(model, test_dataset, n_plots):
             x_recon, mu, log_var = model(x)
             axs[i].plot(x[:,0,0], label = 'Input data')
             axs[i].plot(x_recon[:,0,0], label = 'Reconstructed data')
+            #legend til hvert plot
             axs[i].legend()
+            #1 legend
+            #plt.legend()
             
     #axs[0, 0].plot(test_dataset)
     #axs[0, 0].plot(Reconstructions_for_plotting[0])
