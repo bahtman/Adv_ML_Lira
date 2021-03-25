@@ -1,7 +1,7 @@
 import torch
 import argparse
 import logging
-from TestScript import test_function
+from ReconstructionPlotScript import test_function
 from dataset import TS_dataset
 from network import RecurrentAutoencoder
 from TrainScript import train_model
