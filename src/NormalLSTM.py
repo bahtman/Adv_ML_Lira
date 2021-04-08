@@ -68,10 +68,10 @@ class Decoder(nn.Module):
         return x
 
 
-class RecurrentAutoencoder(nn.Module):
+class RecurrentAutoencoderLSTM(nn.Module):
     def __init__(self, seq_len, n_features, ARGS):
         super().__init__()
-        logging.info('Starting RecurrentAutoencoder')
+        logging.info('Starting RecurrentAutoencoderLSTM')
         self.seq_len = seq_len
         self.n_features = n_features
         self.embedding_dim = ARGS.embedding_dim

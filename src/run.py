@@ -3,8 +3,8 @@ import argparse
 import logging
 from ReconstructionPlotScript import test_function
 from dataset import TS_dataset
-from NormalLSTM import RecurrentAutoencoder
-#from network import RecurrentAutoencoder
+from NormalLSTM import RecurrentAutoencoderLSTM
+from network import RecurrentAutoencoder
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
@@ -17,6 +17,7 @@ PARSER.add_argument('--train', action='store_true', help='Train a new or restore
 PARSER.add_argument('--generate', action='store_true', help='Generate samples from a model.')
 PARSER.add_argument('--cuda', type=int, help='Which cuda device to use')
 PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
+PARSER.add_argument('--model', type=int, default=1, help='Choose model for training if "1" the model will be a VAE, if "2" the model will be a normal LSTM.')
 
 # File paths
 PARSER.add_argument('--data_dir', default=None, help='Location of dataset.')
@@ -69,8 +70,12 @@ if __name__ == '__main__':
     n_features = 1 
     seq_len = 10
 
-
-    model = RecurrentAutoencoder(seq_len, n_features,ARGS).to(ARGS.device)
+    if ARGS.model == 1:
+        model = RecurrentAutoencoder(seq_len, n_features,ARGS).to(ARGS.device)
+        print("A VAE model will be used for training")
+    elif ARGS.model == 2:
+        model = RecurrentAutoencoderLSTM(seq_len, n_features,ARGS).to(ARGS.device)
+        print("A normal LSTM model will be used for training")
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
     n_train = int(len(dataset) - n_val)
