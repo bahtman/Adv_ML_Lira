@@ -3,7 +3,8 @@ import argparse
 import logging
 from ReconstructionPlotScript import test_function
 from dataset import TS_dataset
-from network import RecurrentAutoencoder
+from NormalLSTM import RecurrentAutoencoder
+#from network import RecurrentAutoencoder
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
