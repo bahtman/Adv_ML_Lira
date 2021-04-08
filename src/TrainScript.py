@@ -12,8 +12,8 @@ def elbo_loss(recon_x, x, mu, log_var):
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return recon_loss + KLD
 
-def train_model(model, train_dataset, val_dataset, n_epochs):
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+def train_model(model, train_dataset, val_dataset, n_epochs, learning_rate):
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_func = elbo_loss
     history = dict(train=[], val=[])
     best_model_wts = copy.deepcopy(model.state_dict())

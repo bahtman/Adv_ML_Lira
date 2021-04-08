@@ -56,13 +56,13 @@ class Decoder(nn.Module):
 
 
 class RecurrentAutoencoder(nn.Module):
-    def __init__(self, seq_len, n_features, ARGS):
+    def __init__(self, seq_len, n_features, embedding_dim, latent_dim):
         super().__init__()
         logging.info('Starting RecurrentAutoencoder')
         self.seq_len = seq_len
         self.n_features = n_features
-        self.embedding_dim = ARGS.embedding_dim
-        self.latent_dim = ARGS.latent_dim
+        self.embedding_dim = embedding_dim
+        self.latent_dim = latent_dim
 
         self.encoder = Encoder(self.seq_len, self.n_features, self.embedding_dim )  # .to(device)
         self.decoder = Decoder(self.seq_len, self.n_features, self.latent_dim, self.embedding_dim)  # .to(device)
