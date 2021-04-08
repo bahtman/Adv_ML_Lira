@@ -4,9 +4,8 @@ import torch.nn as nn
 import copy
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+criterion = nn.MSELoss(reduction='sum').to(device)
 def elbo_loss(recon_x, x, mu, log_var):
-    criterion = nn.L1Loss(reduction='sum').to(device)
     recon_loss = criterion(recon_x, x)
     # From https://arxiv.org/abs/1312.6114 Eq. (10)
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
@@ -27,9 +26,9 @@ def train_model(model, train_dataset, val_dataset, n_epochs, learning_rate):
             x, y = sample
             x, y = x.float(), y.float()
             x = x.permute(1, 0, 2)
-            optimizer.zero_grad()
             x_recon, mu, log_var = model(x)
             loss = loss_func(x_recon, x, mu, log_var)
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())

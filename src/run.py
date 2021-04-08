@@ -62,6 +62,8 @@ if __name__ == '__main__':
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
+    else: 
+        torch.manual_seed(ARGS.seed)
 
     if ARGS.dataset == 'generated':
         dataset = TS_dataset(ARGS.data_dir, ARGS.time_steps)
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     n_val = int(len(val)*0.5)
     n_test = int(len(val)-n_val)
     val, test = random_split(val, [n_val, n_test])
-    print(len(test))
+
     train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=False)
     val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
     test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
