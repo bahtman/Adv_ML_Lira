@@ -3,7 +3,7 @@ import argparse
 import logging
 from ReconstructionPlotScript import test_function
 from dataset import TS_dataset
-from network import RecurrentAutoencoder
+from network import VAE
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     seq_len = 10
 
 
-    model = RecurrentAutoencoder(seq_len, n_features,ARGS).to(ARGS.device)
+    model = VAE(seq_len, n_features,ARGS).to(ARGS.device)
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
     n_train = int(len(dataset) - n_val)

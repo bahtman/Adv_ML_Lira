@@ -5,12 +5,12 @@ import copy
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def elbo_loss(recon_x, x, mu, log_var):
-    criterion = nn.L1Loss(reduction='sum').to(device)
-    recon_loss = criterion(recon_x, x)
-    # From https://arxiv.org/abs/1312.6114 Eq. (10)
-    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-    return recon_loss + KLD
+
+def elbo_loss(x, z, p_z, p_x_z, q_z_x):
+    loss = - p_x_z.log_prob(x).sum(0).sum(1) - p_z.log_prob(z).sum(1)
+    loss += q_z_x.log_prob(z).sum(1)
+    return loss
+           
 
 def train_model(model, train_dataset, val_dataset, n_epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -27,9 +27,12 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
             x, y = sample
             x, y = x.float(), y.float()
             x = x.permute(1, 0, 2)
+            x, z, p_z, q_z_x, p_x_z = model(x)
+            loss = loss_func(x, z, p_z, p_x_z,q_z_x)
+            loss = loss.mean()
+
+
             optimizer.zero_grad()
-            x_recon, mu, log_var = model(x)
-            loss = loss_func(x_recon, x, mu, log_var)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
@@ -41,8 +44,9 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
                 x, y = val_dataset_batch.next()
                 x, y = x.float(), y.float()
                 x = x.permute(1, 0, 2)
-                x_recon, mu, log_var = model(x)
-                loss = loss_func(x_recon, x, mu, log_var)
+                x, z, p_z, q_z_x, p_x_z = model(x)
+                loss = loss_func(x, z, p_z, p_x_z, q_z_x )
+                loss = loss.mean()
                 val_losses.append(loss.item())
         train_loss = np.mean(train_losses)
         val_loss = np.mean(val_losses)
