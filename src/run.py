@@ -1,7 +1,7 @@
 import torch
 import argparse
 import logging
-from ReconstructionPlotScript import test_function
+from ReconstructionPlotScript import Reconstruct_function
 from dataset import TS_dataset
 from NormalLSTM import RecurrentAutoencoderLSTM
 from network import RecurrentAutoencoder
@@ -105,4 +105,4 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
-        fig, axs = test_function(trained_model, test_loader, ARGS.amount_of_plots)
+        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots)

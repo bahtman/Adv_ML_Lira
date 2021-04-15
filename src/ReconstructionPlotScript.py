@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-def test_function(model, test_dataset, n_plots):
+def Reconstruct_function(model, test_dataset, n_plots):
     Reconstructions_for_plotting = []
     with torch.no_grad():
         print("shape of test_dataset: ", (test_dataset))
