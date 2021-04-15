@@ -10,10 +10,10 @@ def elbo_loss(x, z, p_z, p_x_z, q_z_x):
     loss = - p_x_z.log_prob(x).sum(0).sum(1) - p_z.log_prob(z).sum(1)
     loss += q_z_x.log_prob(z).sum(1)
     return loss
-           
+          
 
-def train_model(model, train_dataset, val_dataset, n_epochs):
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+def train_model(model, train_dataset, val_dataset, n_epochs, learning_rate):
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_func = elbo_loss
     history = dict(train=[], val=[])
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -30,8 +30,6 @@ def train_model(model, train_dataset, val_dataset, n_epochs):
             x, z, p_z, q_z_x, p_x_z = model(x)
             loss = loss_func(x, z, p_z, p_x_z,q_z_x)
             loss = loss.mean()
-
-
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
