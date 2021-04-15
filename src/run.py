@@ -77,7 +77,7 @@ if __name__ == '__main__':
         raise Exception(f"{ARGS.dataset} is not defined")
 
     if ARGS.model == 1:
-        model = VAE(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
+        model = VAE(n_features, ARGS).to(ARGS.device)
         print("A VAE model will be used for training")
     elif ARGS.model == 2:
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
