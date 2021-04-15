@@ -4,16 +4,23 @@ import symengine
 import timesynth as ts
 import pandas as pd
 import numpy as np
+import pickle
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
 class TS_dataset(Dataset):
 
-    def __init__(self, datafile=None, timesteps=10):
+    def __init__(self, datafile=None, timesteps=10,columns=['acc.xyz.z']):
+        
         self.timesteps = timesteps
         if datafile:
-            dataset = pickle.load(open(datafile, 'rb'))
-            data = pd.DataFrame.from_dict(dataset)
+            data = pickle.load(open(datafile, 'rb'))
+            data = data[(data['IRI']<=2) | (data['IRI']>=4)]
+            data['labels'] = data['IRI'].apply(lambda x: 1 if x <= 2 else -1)
+            data[data.labels==1]
+            self.columns = columns
+            self.data = data
+            self.process_gm()
         else:
             # Initialize samplers
             time_sampler = ts.TimeSampler(stop_time=20)
@@ -45,11 +52,19 @@ class TS_dataset(Dataset):
             data = data[data.labels == 1]
 
         # Assume data column is always 'samples'
-        self.columns = ['samples']
-        self.data = data
-        self.process_data()
+            self.columns = ['samples']
+            self.data = data
+            self.process_synth()
+        
+    def process_gm(self):
+        self.all_data = np.array([])
+        self.labels = np.array([])
+        self.standscaler = StandardScaler()
+        self.mscaler = MinMaxScaler(feature_range=(0, 1))
+        self.data.apply(self.gm_apply,axis=1)
+            
+    def process_synth(self):
 
-    def process_data(self):
         # Normalization
         standscaler = StandardScaler()
         mscaler = MinMaxScaler(feature_range=(0, 1))
@@ -78,7 +93,26 @@ class TS_dataset(Dataset):
             else:
                 self.all_data = np.concatenate([self.all_data, this_array], axis=0)
                 self.labels = np.append(self.labels, this_label)
+    def gm_apply(self,row):
+        label = row['labels']
+        row = row[self.columns]
+        data_np = np.zeros((row.iloc[0].shape[0],row.shape[0]))
 
+        for i,col in enumerate(row):
+            data_np[:,i] = col
+
+        
+        data_np = self.standscaler.fit_transform(data_np)
+        data_np = self.mscaler.fit_transform(data_np)
+        for index in range(data_np.shape[0] - self.timesteps + 1):
+                this_array = data_np[index:index + self.timesteps].reshape((-1, self.timesteps, len(self.columns)))
+                
+                if self.all_data.shape[0] == 0:
+                    self.all_data = this_array
+                    self.labels = label
+                else:
+                    self.all_data = np.concatenate([self.all_data, this_array], axis=0)
+                    self.labels = np.append(self.labels, label)
     def __len__(self):
         return len(self.labels)
 
