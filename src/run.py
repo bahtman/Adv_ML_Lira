@@ -25,7 +25,7 @@ PARSER.add_argument('--dataset', default='generated', help='Which dataset to use
 
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
-PARSER.add_argument('--batch_size', type=int, default=100)
+PARSER.add_argument('--batch_size', type=int, default=32)
 PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
@@ -34,8 +34,6 @@ PARSER.add_argument('--embedding_dim', type=int, default=64, help='Embedding dim
 PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The amount of inputs sequences and their respective reconstructions to be plotted')
 
 import torch.nn as nn
-
-
 
 if __name__ == '__main__':
     # Setup logging
@@ -56,7 +54,7 @@ if __name__ == '__main__':
         os.makedirs(ARGS.output_dir)
 
     ARGS.device = torch.device('cuda'
-                               if torch.cuda.is_available() and not None
+                               if torch.cuda.is_available()
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
@@ -79,11 +77,11 @@ if __name__ == '__main__':
     if ARGS.model == 1:
         from network import VAE
         model = VAE(n_features, ARGS).to(ARGS.device)
-        logging.info("A VAE model will be used for training")
+        logging.info("A VAE model type structure will be used for training")
     elif ARGS.model == 2:
         from NormalLSTM import RecurrentAutoencoderLSTM
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
-        logging.info("A normal LSTM model will be used for training")
+        logging.info("A normal LSTM model type structure will be used for training")
  
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
@@ -109,4 +107,4 @@ if __name__ == '__main__':
 
     if ARGS.generate:
         from ReconstructionPlotScript import Reconstruct_function
-        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots)
+        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)

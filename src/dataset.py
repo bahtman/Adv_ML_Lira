@@ -1,7 +1,5 @@
 from torch.utils.data import Dataset
 import torch
-import symengine
-import timesynth as ts
 import pandas as pd
 import numpy as np
 import pickle
@@ -17,11 +15,13 @@ class TS_dataset(Dataset):
             data = pickle.load(open(datafile, 'rb'))
             data = data[(data['IRI']<=2) | (data['IRI']>=4)]
             data['labels'] = data['IRI'].apply(lambda x: 1 if x <= 2 else -1)
-            data[data.labels==1]
+            data = data[data.labels==1]
             self.columns = columns
             self.data = data
             self.process_gm()
         else:
+            import symengine
+            import timesynth as ts
             # Initialize samplers
             time_sampler = ts.TimeSampler(stop_time=20)
 

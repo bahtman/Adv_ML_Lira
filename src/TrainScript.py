@@ -8,7 +8,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def elbo_loss(x, z, p_z, p_x_z, q_z_x):
     kl = q_z_x.log_prob(z).sum(1) - p_z.log_prob(z).sum(1)
-    loss =  p_x_z.log_prob(x).sum(0).sum(1) - kl
+    loss =  p_x_z.log_prob(x).sum(0).sum(1) #- kl
     return -loss.mean()
           
 
@@ -41,7 +41,7 @@ def train_model(model, train_dataset, val_dataset,ARGS):
             val_dataset_batch = iter(val_dataset)
             for _ in range(len(val_dataset)):
                 x, y = val_dataset_batch.next()
-                x, y = x.float(), y.float()
+                x, y = x.float().to(ARGS.device), y.float().to(ARGS.device)
                 x = x.permute(1, 0, 2)
                 x, z, p_z, q_z_x, p_x_z = model(x)
                 loss = loss_func(x, z, p_z, p_x_z, q_z_x )
