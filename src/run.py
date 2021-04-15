@@ -1,10 +1,7 @@
 import torch
 import argparse
 import logging
-from ReconstructionPlotScript import Reconstruct_function
 from dataset import TS_dataset
-from network import VAE
-from NormalLSTM import RecurrentAutoencoderLSTM
 
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
@@ -66,23 +63,27 @@ if __name__ == '__main__':
     else: 
         torch.manual_seed(ARGS.seed)
     if ARGS.dataset == 'generated':
+        logging.info('Using generated dataset')
         dataset = TS_dataset(timesteps=ARGS.time_steps)
         n_features = 1
         seq_len = ARGS.time_steps
     elif ARGS.dataset == 'GM':
+        logging.info('Using GreenMobility dataset')
         columns= ['acc.xyz.z']
-        dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns)
+        dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns, logger=logging)
         n_features= len(columns)
         seq_len = ARGS.time_steps
     else:
         raise Exception(f"{ARGS.dataset} is not defined")
 
     if ARGS.model == 1:
+        from network import VAE
         model = VAE(n_features, ARGS).to(ARGS.device)
-        print("A VAE model will be used for training")
+        logging.info("A VAE model will be used for training")
     elif ARGS.model == 2:
+        from NormalLSTM import RecurrentAutoencoderLSTM
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
-        print("A normal LSTM model will be used for training")
+        logging.info("A normal LSTM model will be used for training")
  
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
@@ -107,4 +108,5 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
+        from ReconstructionPlotScript import Reconstruct_function
         fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots)
