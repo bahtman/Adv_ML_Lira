@@ -28,7 +28,7 @@ PARSER.add_argument('--dataset', default='generated', help='Which dataset to use
 
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
-PARSER.add_argument('--batch_size', type=int, default=100)
+PARSER.add_argument('--batch_size', type=int, default=32)
 PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         os.makedirs(ARGS.output_dir)
 
     ARGS.device = torch.device('cuda'
-                               if torch.cuda.is_available() and not None
+                               if torch.cuda.is_available()
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
@@ -107,4 +107,4 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
-        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots)
+        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)
