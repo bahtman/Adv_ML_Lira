@@ -14,9 +14,11 @@ def test_function(model, test_dataset, n_plots):
             x, y = sample
             x, y = x.float(), y.float()
             x = x.permute(1, 0, 2)
-            x_recon, mu, log_var = model(x)
+            x, z, p_z, q_z_x, p_x_z = model(x)
+            p_x_z = p_x_z.mean
+            print(p_x_z.shape)
             axs[i].plot(x[:,0,0], label = 'Input data')
-            axs[i].plot(x_recon[:,0,0], label = 'Reconstructed data')
+            axs[i].plot(p_x_z[:,0,0], label = 'Reconstructed data')
             #legend til hvert plot
             axs[i].legend()
             #1 legend

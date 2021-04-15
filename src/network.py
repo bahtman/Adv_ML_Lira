@@ -4,10 +4,10 @@ from torch.autograd import Variable
 import torch.distributions as d
 import logging
 class VAE(nn.Module):
-    def __init__(self, seq_len, n_features,ARGS):
+    def __init__(self, n_features,ARGS):
         super().__init__()
         logging.info('Starting VAE')
-        self.seq_len, self.n_features = seq_len, n_features
+        self.seq_len, self.n_features = ARGS.time_steps, n_features
         self.embedding_dim, self.hidden_dim = ARGS.embedding_dim, 2 * ARGS.embedding_dim
         self.latent_dim = ARGS.latent_dim
 

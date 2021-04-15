@@ -60,19 +60,19 @@ if __name__ == '__main__':
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
 
+    #Have to be based upon dataset
+    n_features = 1
     if ARGS.time_steps is None:
         dataset = TS_dataset(ARGS.data_dir)
     else:
         dataset = TS_dataset(ARGS.data_dir, ARGS.time_steps)
-    #Have to be based upon dataset
-    n_features = 1 
-    seq_len = 10
 
 
-    model = VAE(seq_len, n_features,ARGS).to(ARGS.device)
-    val_percent = 0.1
+    model = VAE(n_features,ARGS).to(ARGS.device)
+    val_percent = 0.2
+
     n_val = int(len(dataset) * val_percent)
-    n_train = int(len(dataset) - n_val)
+    n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
     
     # make datasets iterable
