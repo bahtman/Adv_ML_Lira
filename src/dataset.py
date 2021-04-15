@@ -42,6 +42,7 @@ class TS_dataset(Dataset):
             # save as Dataframe
             data = pd.DataFrame(
                 {'samples': samples + defect_samples, 'labels': [1 if x == 0 else -1 for x in defect_samples]})
+            data = data[data.labels == 1]
 
         # Assume data column is always 'samples'
         self.columns = ['samples']

@@ -3,8 +3,9 @@ import argparse
 import logging
 from ReconstructionPlotScript import test_function
 from dataset import TS_dataset
+from network import VAE
 from NormalLSTM import RecurrentAutoencoderLSTM
-from network import RecurrentAutoencoder
+
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
@@ -65,6 +66,7 @@ if __name__ == '__main__':
     else: 
         torch.manual_seed(ARGS.seed)
 
+
     if ARGS.dataset == 'generated':
         dataset = TS_dataset(ARGS.data_dir, ARGS.time_steps)
         n_features = 1
@@ -75,7 +77,7 @@ if __name__ == '__main__':
         raise Exception(f"{ARGS.dataset} is not defined")
 
     if ARGS.model == 1:
-        model = RecurrentAutoencoder(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
+        model = VAE(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
         print("A VAE model will be used for training")
     elif ARGS.model == 2:
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
@@ -83,7 +85,7 @@ if __name__ == '__main__':
  
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
-    n_train = int(len(dataset) - n_val)
+    n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
     
     # make datasets iterable
