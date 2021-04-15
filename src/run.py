@@ -79,10 +79,10 @@ if __name__ == '__main__':
 
     if ARGS.model == 1:
         model = VAE(n_features, ARGS).to(ARGS.device)
-        print("A VAE model will be used for training")
+        print("A VAE model type structure will be used for training")
     elif ARGS.model == 2:
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
-        print("A normal LSTM model will be used for training")
+        print("A normal LSTM model type structure will be used for training")
  
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
