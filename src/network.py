@@ -16,12 +16,16 @@ class VAE(nn.Module):
         
         self.mu_log_sigma = nn.Linear(2*self.embedding_dim * self.seq_len, 2*self.latent_dim)
         self.genLin = nn.Linear(in_features=self.latent_dim, out_features= self.embedding_dim * self.seq_len)
+        self.rnn1 = nn.LSTM(input_size=self.n_features, hidden_size=self.hidden_dim, bidirectional=True)
+        self.rnn2 = nn.LSTM(input_size=self.hidden_dim*2, hidden_size=self.embedding_dim, bidirectional=True)
+        self.rnn3 = nn.LSTM(input_size=self.embedding_dim, hidden_size=self.hidden_dim, bidirectional=True)
+        self.rnn4 = nn.LSTM(input_size=self.hidden_dim*2, hidden_size=self.n_features)
+
     
     def posterior(self, x):
-        rnn1 = nn.LSTM(input_size=self.n_features, hidden_size=self.hidden_dim, bidirectional=True)
-        rnn2 = nn.LSTM(input_size=self.hidden_dim*2, hidden_size=self.embedding_dim, bidirectional=True)
-        rnn_features, h = rnn1(x)
-        rnn_features, h = rnn2(rnn_features)
+
+        rnn_features, h = self.rnn1(x)
+        rnn_features, h = self.rnn2(rnn_features)
         x_flattened = rnn_features.reshape(-1, 2 * self.embedding_dim * self.seq_len)
         mu, log_sigma = self.mu_log_sigma(x_flattened).chunk(2, dim=-1)
         return d.Normal(mu, log_sigma.exp())
@@ -29,14 +33,10 @@ class VAE(nn.Module):
 
 
     def generative(self, z):
-        rnn1 = nn.LSTM(input_size=self.embedding_dim, hidden_size=self.hidden_dim, bidirectional=True)
-        rnn2 = nn.LSTM(input_size=self.hidden_dim*2, hidden_size=self.n_features)
-
-
         x = self.genLin(z)
         x = x.reshape(self.seq_len, -1, self.embedding_dim)
-        x, h = rnn1(x)
-        x, h = rnn2(x)
+        x, h = self.rnn3(x)
+        x, h = self.rnn4(x)
         
         x_flattened = x.reshape(self.seq_len,-1, self.n_features)
 

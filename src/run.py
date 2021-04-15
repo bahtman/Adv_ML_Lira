@@ -58,21 +58,19 @@ if __name__ == '__main__':
     if not os.path.isdir(ARGS.output_dir):
         os.makedirs(ARGS.output_dir)
 
-    ARGS.device = torch.device('cuda:{}'.format(ARGS.cuda)
-                               if torch.cuda.is_available() and ARGS.cuda is not None
+    ARGS.device = torch.device('cuda'
+                               if torch.cuda.is_available() and not None
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
     else: 
         torch.manual_seed(ARGS.seed)
-
-
     if ARGS.dataset == 'generated':
         dataset = TS_dataset(timesteps=ARGS.time_steps)
         n_features = 1
         seq_len = ARGS.time_steps
     elif ARGS.dataset == 'GM':
-        columns= ['acc.xyz.z','acc.xyz.x']
+        columns= ['acc.xyz.z']
         dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns)
         n_features= len(columns)
         seq_len = ARGS.time_steps
@@ -105,8 +103,7 @@ if __name__ == '__main__':
         model,
         train_loader,
         val_loader,
-        ARGS.n_epochs,
-        ARGS.lr
+        ARGS
         )
 
     if ARGS.generate:

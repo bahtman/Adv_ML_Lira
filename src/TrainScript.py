@@ -7,17 +7,19 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def elbo_loss(x, z, p_z, p_x_z, q_z_x):
-    loss = - p_x_z.log_prob(x).sum(0).sum(1) - p_z.log_prob(z).sum(1)
-    loss += q_z_x.log_prob(z).sum(1)
-    return loss
+    kl = q_z_x.log_prob(z).sum(1) - p_z.log_prob(z).sum(1)
+    loss =  p_x_z.log_prob(x).sum(0).sum(1) - kl
+    return -loss.mean()
           
 
-def train_model(model, train_dataset, val_dataset, n_epochs, learning_rate):
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+def train_model(model, train_dataset, val_dataset,ARGS):
+    optimizer = torch.optim.Adam(model.parameters(), lr=ARGS.lr)
+    n_epochs = ARGS.n_epochs
     loss_func = elbo_loss
     history = dict(train=[], val=[])
     best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = 10000.0
+    model.to(ARGS.device)
     for epoch in range(1, n_epochs + 1):
         model = model.train()
         train_losses = []
@@ -25,11 +27,10 @@ def train_model(model, train_dataset, val_dataset, n_epochs, learning_rate):
         for _ in range(len(train_dataset)):
             sample = train_dataset_batch.next()
             x, y = sample
-            x, y = x.float(), y.float()
+            x, y = x.float().to(ARGS.device), y.float().to(ARGS.device)
             x = x.permute(1, 0, 2)
             x, z, p_z, q_z_x, p_x_z = model(x)
             loss = loss_func(x, z, p_z, p_x_z,q_z_x)
-            loss = loss.mean()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -44,7 +45,6 @@ def train_model(model, train_dataset, val_dataset, n_epochs, learning_rate):
                 x = x.permute(1, 0, 2)
                 x, z, p_z, q_z_x, p_x_z = model(x)
                 loss = loss_func(x, z, p_z, p_x_z, q_z_x )
-                loss = loss.mean()
                 val_losses.append(loss.item())
         train_loss = np.mean(train_losses)
         val_loss = np.mean(val_losses)
