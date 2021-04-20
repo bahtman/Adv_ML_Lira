@@ -22,7 +22,7 @@ class TS_dataset(Dataset):
             msk = np.random.rand(len(df_no_outliers)) < 0.7
             train = df_no_outliers[msk]
             test = df_no_outliers[~msk]
-            
+
             self.data_test = pd.concat([data[data.labels==-1], test])
             # self.data = train  TODO fix
             self.data = data[data.labels==1]
@@ -72,7 +72,7 @@ class TS_dataset(Dataset):
     def process_gm(self):
         self.train = np.array([])
         self.labels = np.array([])
-        
+        # how to retrieve test?
         self.test = np.array([])
 
         self.standscaler = StandardScaler()
