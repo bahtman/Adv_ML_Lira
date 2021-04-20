@@ -27,7 +27,7 @@ PARSER.add_argument('--dataset', default='generated', help='Which dataset to use
 
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
-PARSER.add_argument('--batch_size', type=int, default=100)
+PARSER.add_argument('--batch_size', type=int, default=32)
 PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
@@ -42,7 +42,7 @@ import torch.nn as nn
 if __name__ == '__main__':
     # Setup logging
     logging.basicConfig(
-        format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
+        format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(message)s",
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -58,17 +58,19 @@ if __name__ == '__main__':
         os.makedirs(ARGS.output_dir)
 
     ARGS.device = torch.device('cuda'
-                               if torch.cuda.is_available() and not None
+                               if torch.cuda.is_available()
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
     else: 
         torch.manual_seed(ARGS.seed)
     if ARGS.dataset == 'generated':
+        logging.info('Using generated dataset')
         dataset = TS_dataset(timesteps=ARGS.time_steps)
         n_features = 1
         seq_len = ARGS.time_steps
     elif ARGS.dataset == 'GM':
+        logging.info('Using GreenMobility dataset')
         columns= ['acc.xyz.z']
         dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns)
         n_features= len(columns)
@@ -78,10 +80,10 @@ if __name__ == '__main__':
 
     if ARGS.model == 1:
         model = VAE(n_features, ARGS).to(ARGS.device)
-        print("A VAE model type structure will be used for training")
+        logging.info("A VAE model type structure will be used for training")
     elif ARGS.model == 2:
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
-        print("A normal LSTM model type structure will be used for training")
+        logging.info("A normal LSTM model type structure will be used for training")
  
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
@@ -106,5 +108,8 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
-        from ReconstructionPlotScriptTest2 import Reconstruct_function
+        logging.info("Running" + Reconstruct_function.__name__)
         fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
+        from ReconstructionPlotScriptTest2 import Reconstruct_function
+        logging.info("Running" + Reconstruct_function.__name__)
+        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)

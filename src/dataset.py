@@ -8,18 +8,19 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class TS_dataset(Dataset):
 
-    def __init__(self, datafile=None, timesteps=10,columns=['acc.xyz.z']):
+    def __init__(self, datafile=None, timesteps=10, columns=['acc.xyz.z']):
         
         self.timesteps = timesteps
         if datafile:
             data = pickle.load(open(datafile, 'rb'))
             data = data[(data['IRI']<=2) | (data['IRI']>=4)]
             data['labels'] = data['IRI'].apply(lambda x: 1 if x <= 2 else -1)
-            data = data[data.labels==1]
+            self.data_test = data
+            self.data = data[data.labels==1]
             self.columns = columns
-            self.data = data
             self.process_gm()
         else:
+            # Synthetic data
             import symengine
             import timesynth as ts
             # Initialize samplers
@@ -61,6 +62,7 @@ class TS_dataset(Dataset):
         self.labels = np.array([])
         self.standscaler = StandardScaler()
         self.mscaler = MinMaxScaler(feature_range=(0, 1))
+        
         self.data.apply(self.gm_apply,axis=1)
             
     def process_synth(self):

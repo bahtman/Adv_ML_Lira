@@ -8,7 +8,7 @@ from LossFunction import elbo_loss
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
           
 
-def train_model(model, train_dataset, val_dataset,ARGS):
+def train_model(model, train_dataset, val_dataset, ARGS):
     optimizer = torch.optim.Adam(model.parameters(), lr=ARGS.lr)
     n_epochs = ARGS.n_epochs
     loss_func = elbo_loss
@@ -69,5 +69,4 @@ def train_model(model, train_dataset, val_dataset,ARGS):
 
         print(f'Epoch {epoch}: train loss {train_loss} val loss {val_loss}')
     model.load_state_dict(best_model_wts)
-    print("hej",val_diagnostics_df)
     return model.eval(), history, train_diagnostics_df, val_diagnostics_df
