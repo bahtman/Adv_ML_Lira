@@ -7,7 +7,7 @@ from NormalLSTM import RecurrentAutoencoderLSTM
 
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
-
+from torch import load
 import os
 
 PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -15,6 +15,7 @@ PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argpar
 # Actions
 PARSER.add_argument('--train', action='store_true', help='Train a new or restored model.')
 PARSER.add_argument('--generate', action='store_true', help='Generate samples from a model.')
+PARSER.add_argument('--detect', action='store_true', help='Detect outliers by using pre-trained model.')
 PARSER.add_argument('--cuda', type=int, help='Which cuda device to use')
 PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
 PARSER.add_argument('--model', type=int, default=1, help='Choose model for training if "1" the model will be a VAE, if "2" the model will be a normal LSTM.')
@@ -24,6 +25,7 @@ PARSER.add_argument('--data_dir', default='./Data/gm_data.pickle', help='Locatio
 PARSER.add_argument('--output_dir', default='./results/')
 PARSER.add_argument('--results_file', default='results.txt', help='Filename where to store settings and test results.')
 PARSER.add_argument('--dataset', default='generated', help='Which dataset to use. [generated|GM]')
+PARSER.add_argument('--trained_model', default='boi.model', help='Path of pretrained model.')
 
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
@@ -84,7 +86,8 @@ if __name__ == '__main__':
     elif ARGS.model == 2:
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
         logging.info("A normal LSTM model type structure will be used for training")
- 
+    
+    # Set 10% validation
     val_percent = 0.1
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
@@ -108,8 +111,13 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
-        logging.info("Running" + Reconstruct_function.__name__)
-        fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
         from ReconstructionPlotScriptTest2 import Reconstruct_function
         logging.info("Running" + Reconstruct_function.__name__)
         fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)
+    if ARGS.detect:
+        if not os.path.exists(ARGS.trained_model):
+            logging.error(f"Pre-trained model {ARGS.trained_model} not found. Use --trained_model with real path")
+            exit(1)
+        from anomaly_detect_proto import detect
+        model = torch.load(ARGS.trained_model)
+        detect(model, test_loader)
