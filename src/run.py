@@ -114,10 +114,12 @@ if __name__ == '__main__':
         from ReconstructionPlotScriptTest2 import Reconstruct_function
         logging.info("Running" + Reconstruct_function.__name__)
         fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)
+
     if ARGS.detect:
         if not os.path.exists(ARGS.trained_model):
-            logging.error(f"Pre-trained model {ARGS.trained_model} not found. Use --trained_model with real path")
+            logging.error(f"Pre-trained model {ARGS.trained_model} not found. Use --trained_model with valid path")
             exit(1)
+
         from anomaly_detect_proto import detect
         model = torch.load(ARGS.trained_model)
-        detect(model, test_loader)
+        detect(model, test_loader, ARGS.device)
