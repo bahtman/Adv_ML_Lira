@@ -102,10 +102,10 @@ if __name__ == '__main__':
         train_loader.dataset.isTrain = True
         val_loader.dataset.isTrain = True
         trained_model, history, train_diagnostics, val_diagnostics = train_model(
-        model,
-        train_loader,
-        val_loader,
-        ARGS
+            model,
+            train_loader,
+            val_loader,
+            ARGS
         )
 
     test_dataset = dataset
