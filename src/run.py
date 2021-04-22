@@ -11,7 +11,7 @@ from torch import load
 import os
 
 PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 # Actions
 PARSER.add_argument('--train', action='store_true', help='Train a new or restored model.')
 PARSER.add_argument('--generate', action='store_true', help='Generate samples from a model.')
@@ -21,11 +21,11 @@ PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
 PARSER.add_argument('--model', type=int, default=1, help='Choose model for training if "1" the model will be a VAE, if "2" the model will be a normal LSTM.')
 
 # File paths
-PARSER.add_argument('--data_dir', default='./Data/gm_data.pickle', help='Location of dataset.')
-PARSER.add_argument('--output_dir', default='./results/')
-PARSER.add_argument('--results_file', default='results.txt', help='Filename where to store settings and test results.')
+PARSER.add_argument('--data_dir', default=f'{BASE_PATH}/Data/gm_data.pickle', help='Location of dataset.')
+PARSER.add_argument('--output_dir', default=f'{BASE_PATH}/results/')
+PARSER.add_argument('--results_file', default=f'{BASE_PATH}/results.txt', help='Filename where to store settings and test results.')
 PARSER.add_argument('--dataset', default='generated', help='Which dataset to use. [generated|GM]')
-PARSER.add_argument('--trained_model', default='boi.model', help='Path of pretrained model.')
+PARSER.add_argument('--trained_model', default=f'{BASE_PATH}/boi.model', help='Path of pretrained model.')
 
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
@@ -98,17 +98,20 @@ if __name__ == '__main__':
     #val, test = random_split(val, [n_val, n_test])
     train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=False)
     val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
-    test_dataset = dataset
-    test_dataset.isTrain = False
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
-
+    
     if ARGS.train:
+        train_loader.dataset.isTrain = True
+        val_loader.dataset.isTrain = True
         trained_model, history, train_diagnostics, val_diagnostics = train_model(
         model,
         train_loader,
         val_loader,
         ARGS
         )
+
+    test_dataset = dataset
+    test_dataset.isTrain = False
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
 
     if ARGS.generate:
         import matplotlib.pyplot as plt

@@ -13,7 +13,6 @@ class TS_dataset(Dataset):
         self.timesteps = timesteps
         if datafile:
             # GreenMobility dataset
-            from sklearn.model_selection import train_test_split
             data = pickle.load(open(datafile, 'rb'))
             data = data[(data['IRI']<=2) | (data['IRI']>=4)]
             data['labels'] = data['IRI'].apply(lambda x: 1 if x <= 2 else -1) # Train on low IRI = good road.
@@ -24,8 +23,6 @@ class TS_dataset(Dataset):
             test = df_no_outliers[~msk]
 
             self.data_test = pd.concat([data[data.labels==-1], test])
-            #self.data_test = data[data.labels==-1]
-            #self.data = data[data.labels==1]  #TODO fix
             self.data = train
             logging.info(f'Test set has {len(self.data_test)} samples')
             logging.info(f'Train set has {len(self.data)} samples')
