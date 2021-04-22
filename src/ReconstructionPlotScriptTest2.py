@@ -18,14 +18,12 @@ def Reconstruct_function(model, test_dataset, train_diagnostics, val_diagnostics
         x,p_x_z = x.cpu(), p_x_z.cpu()
         axs[0].plot(x[:,0,0], label = 'Input data')
         axs[0].plot(p_x_z[:,0,0], label = 'Reconstructed data')
-        print(train_diagnostics['elbo'])
-        print(train_diagnostics['log_px'].shape)
-        axs[1].plot(train_diagnostics['elbo'], label = 'elbo loss for training data')
-        axs[1].plot(val_diagnostics['elbo'], label = 'elbo loss for validation data')
-        axs[2].plot(train_diagnostics['log_px'], label = 'log_px|z loss for training data')
-        axs[2].plot(val_diagnostics['log_px'], label = 'log_px|z loss for validation data')
-        axs[3].plot(train_diagnostics['kl'], label = 'kl loss for training data')
-        axs[3].plot(val_diagnostics['kl'], label = 'kl loss for validation data' )
+        axs[1].plot(train_diagnostics['elbo'].to_numpy(), label = 'elbo loss for training data')
+        axs[1].plot(val_diagnostics['elbo'].to_numpy(), label = 'elbo loss for validation data')
+        axs[2].plot(train_diagnostics['log_px'].to_numpy(), label = 'log_px|z loss for training data')
+        axs[2].plot(val_diagnostics['log_px'].to_numpy(), label = 'log_px|z loss for validation data')
+        axs[3].plot(train_diagnostics['kl'].to_numpy(), label = 'kl loss for training data')
+        axs[3].plot(val_diagnostics['kl'].to_numpy(), label = 'kl loss for validation data' )
         #legend til hvert plot
         axs[0].legend()
         axs[1].legend()
@@ -35,6 +33,6 @@ def Reconstruct_function(model, test_dataset, train_diagnostics, val_diagnostics
         #plt.legend()n
 
         for ax in axs.flat:
-            ax.set(xlabel='time', ylabel='y-value :)')
+            ax.set(xlabel='epoch', ylabel='loss')
 
     return fig, axs

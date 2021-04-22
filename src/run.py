@@ -4,7 +4,6 @@ import logging
 from dataset import TS_dataset
 from network import VAE
 from NormalLSTM import RecurrentAutoencoderLSTM
-
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
@@ -106,5 +105,7 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
+        import matplotlib.pyplot as plt
         from ReconstructionPlotScriptTest2 import Reconstruct_function
         fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
+        plt.show()
