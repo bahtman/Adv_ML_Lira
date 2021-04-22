@@ -26,7 +26,6 @@ PARSER.add_argument('--results_file', default='results.txt', help='Filename wher
 PARSER.add_argument('--dataset', default='generated', help='Which dataset to use. [generated|GM]')
 
 # Training parameters
-PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
 PARSER.add_argument('--batch_size', type=int, default=100)
 PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
@@ -107,4 +106,6 @@ if __name__ == '__main__':
 
     if ARGS.generate:
         from ReconstructionPlotScriptTest2 import Reconstruct_function
+        from plotting import make_vae_plots
         fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
+        #make_vae_plots(trained_model, x, y, outputs, training_data, validation_data)

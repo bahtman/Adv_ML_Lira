@@ -36,5 +36,6 @@ def Reconstruct_function(model, test_dataset, train_diagnostics, val_diagnostics
 
         for ax in axs.flat:
             ax.set(xlabel='time', ylabel='y-value :)')
+        fig.savefig(os.path.join(ARGS.output_dir, 'loss_plots.png'))
 
     return fig, axs
