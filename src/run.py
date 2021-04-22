@@ -39,7 +39,6 @@ PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The am
 
 
 
-
 if __name__ == '__main__':
     # Setup logging
     logging.basicConfig(

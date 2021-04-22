@@ -32,9 +32,7 @@ def train_model(model, train_dataset, val_dataset, ARGS):
             x = x.permute(1, 0, 2)
             x, z, p_z, q_z_x, p_x_z = model(x)
             loss, elbo, log_px, kl = loss_func(x, z, p_z, p_x_z,q_z_x)
-
-            elbo = elbo.mean()
-            temp_train_diagnostics[0] = elbo
+            temp_train_diagnostics[0] = elbo.mean()
             temp_train_diagnostics[1] = log_px.mean()
             temp_train_diagnostics[2] = kl.mean()
             optimizer.zero_grad()
