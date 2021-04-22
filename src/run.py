@@ -26,7 +26,7 @@ PARSER.add_argument('--dataset', default='generated', help='Which dataset to use
 
 # Training parameters
 PARSER.add_argument('--batch_size', type=int, default=100)
-PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
+PARSER.add_argument('--time-steps', type=int, default=25, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
 PARSER.add_argument('--latent_dim', type=int, default=2, help='Latent dim')
@@ -105,8 +105,10 @@ if __name__ == '__main__':
 
     if ARGS.generate:
         import matplotlib.pyplot as plt
-        from ReconstructionPlotScriptTest2 import Reconstruct_function
-        from plotting import make_vae_plots
-        fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
+        from ReconstructionPlotScript import Reconstruct_function as recfunct1
+        from ReconstructionPlotScriptTest2 import Reconstruct_function as recfunct2
+        #from plotting import make_vae_plots
+        fig, axs = recfunct1(trained_model, test_loader, 5, ARGS)
+        fig, axs = recfunct2(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
         #make_vae_plots(trained_model, x, y, outputs, training_data, validation_data)
         plt.show()
