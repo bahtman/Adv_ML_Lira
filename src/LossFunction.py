@@ -9,6 +9,6 @@ def elbo_loss(x, z, p_z, p_x_z, q_z_x):
     lossfunc = nn.MSELoss()
     log_px = lossfunc(p_x_z.mean,x)
     #log_px = -p_x_z.log_prob(x).sum(0).sum(1)
-    loss =  log_px #+ kl
+    loss =  log_px + kl
     return loss.mean(), loss, log_px, kl
           
