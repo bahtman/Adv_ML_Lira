@@ -4,7 +4,6 @@ import logging
 from dataset import TS_dataset
 from network import VAE
 from NormalLSTM import RecurrentAutoencoderLSTM
-
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 from torch import load
@@ -30,6 +29,7 @@ PARSER.add_argument('--trained_model', default='boi.model', help='Path of pretra
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
 PARSER.add_argument('--batch_size', type=int, default=32)
+PARSER.add_argument('--batch_size', type=int, default=100)
 PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
@@ -111,6 +111,7 @@ if __name__ == '__main__':
         )
 
     if ARGS.generate:
+        import matplotlib.pyplot as plt
         from ReconstructionPlotScriptTest2 import Reconstruct_function
         logging.info("Running" + Reconstruct_function.__name__)
         fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)
@@ -123,3 +124,8 @@ if __name__ == '__main__':
         from anomaly_detect_proto import detect
         model = torch.load(ARGS.trained_model)
         detect(model, test_loader, ARGS.device)
+
+        from plotting import make_vae_plots
+        fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
+        #make_vae_plots(trained_model, x, y, outputs, training_data, validation_data)
+        plt.show()

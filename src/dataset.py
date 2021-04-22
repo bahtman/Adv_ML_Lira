@@ -86,8 +86,8 @@ class TS_dataset(Dataset):
         # Normalization
         standscaler = StandardScaler()
         mscaler = MinMaxScaler(feature_range=(0, 1))
-        self.data[self.columns] = standscaler.fit_transform(self.data[self.columns])
-        self.data[self.columns] = mscaler.fit_transform(self.data[self.columns])
+        #self.data[self.columns] = standscaler.fit_transform(self.data[self.columns])
+        #self.data[self.columns] = mscaler.fit_transform(self.data[self.columns])
 
         # Init output arrays
         self.all_data = np.array([])
