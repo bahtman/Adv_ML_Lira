@@ -108,7 +108,7 @@ if __name__ == '__main__':
         from ReconstructionPlotScript import Reconstruct_function as recfunct1
         from ReconstructionPlotScriptTest2 import Reconstruct_function as recfunct2
         #from plotting import make_vae_plots
-        fig, axs = recfunct1(trained_model, test_loader, 5, ARGS)
+        fig, axs = recfunct1(trained_model, train_loader, 5, ARGS)
         fig, axs = recfunct2(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
         #make_vae_plots(trained_model, x, y, outputs, training_data, validation_data)
         plt.show()
