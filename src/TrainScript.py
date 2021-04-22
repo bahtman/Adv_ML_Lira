@@ -69,5 +69,4 @@ def train_model(model, train_dataset, val_dataset,ARGS):
 
         print(f'Epoch {epoch}: train loss {train_loss} val loss {val_loss}')
     model.load_state_dict(best_model_wts)
-    print("hej",val_diagnostics_df)
     return model.eval(), history, train_diagnostics_df, val_diagnostics_df
