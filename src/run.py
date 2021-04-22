@@ -6,6 +6,7 @@ from network import VAE
 from NormalLSTM import RecurrentAutoencoderLSTM
 from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
+import torch.nn as nn
 from torch import load
 import os
 
@@ -29,7 +30,6 @@ PARSER.add_argument('--trained_model', default='boi.model', help='Path of pretra
 # Training parameters
 PARSER.add_argument('--n_labeled', type=int, default=3000, help='Number of training examples in the dataset')
 PARSER.add_argument('--batch_size', type=int, default=32)
-PARSER.add_argument('--batch_size', type=int, default=100)
 PARSER.add_argument('--time-steps', type=int, default=10, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
@@ -37,7 +37,6 @@ PARSER.add_argument('--latent_dim', type=int, default=2, help='Latent dim')
 PARSER.add_argument('--embedding_dim', type=int, default=64, help='Embedding dimension')
 PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The amount of inputs sequences and their respective reconstructions to be plotted')
 
-import torch.nn as nn
 
 
 
@@ -74,7 +73,7 @@ if __name__ == '__main__':
     elif ARGS.dataset == 'GM':
         logging.info('Using GreenMobility dataset')
         columns= ['acc.xyz.z']
-        dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns)
+        dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps, columns=columns)
         n_features= len(columns)
         seq_len = ARGS.time_steps
     else:
@@ -94,13 +93,14 @@ if __name__ == '__main__':
     train, val = random_split(dataset, [n_train, n_val])
     
     # make datasets iterable
-    n_val = int(len(val)*0.5)
-    n_test = int(len(val)-n_val)
-    val, test = random_split(val, [n_val, n_test])
-
+    #n_val = int(len(val)*0.5)
+    #n_test = int(len(val)-n_val)
+    #val, test = random_split(val, [n_val, n_test])
     train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=False)
     val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
-    test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
+    test_dataset = dataset
+    test_dataset.isTrain = False
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
 
     if ARGS.train:
         trained_model, history, train_diagnostics, val_diagnostics = train_model(
@@ -122,6 +122,7 @@ if __name__ == '__main__':
             exit(1)
 
         from anomaly_detect_proto import detect
+        logging.info('Detecting outliers...')
         model = torch.load(ARGS.trained_model)
         detect(model, test_loader, ARGS.device)
 

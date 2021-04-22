@@ -8,8 +8,8 @@ import logging
 
 class TS_dataset(Dataset):
 
-    def __init__(self, datafile=None, timesteps=10, columns=['acc.xyz.z']):
-        
+    def __init__(self, datafile=None, timesteps=10, columns=['acc.xyz.z'], isTrain=True):
+        self.isTrain = isTrain
         self.timesteps = timesteps
         if datafile:
             # GreenMobility dataset
@@ -24,8 +24,9 @@ class TS_dataset(Dataset):
             test = df_no_outliers[~msk]
 
             self.data_test = pd.concat([data[data.labels==-1], test])
-            # self.data = train  TODO fix
-            self.data = data[data.labels==1]
+            #self.data_test = data[data.labels==-1]
+            #self.data = data[data.labels==1]  #TODO fix
+            self.data = train
             logging.info(f'Test set has {len(self.data_test)} samples')
             logging.info(f'Train set has {len(self.data)} samples')
             self.columns = columns
@@ -78,7 +79,9 @@ class TS_dataset(Dataset):
         self.standscaler = StandardScaler()
         self.mscaler = MinMaxScaler(feature_range=(0, 1))
         
+        logging.info('Preprocessing train')
         self.data.apply(self.gm_apply, axis=1, args=(['train']))
+        logging.info('Preprocessing test')
         self.data_test.apply(self.gm_apply, axis=1, args=(['test']))
             
     def process_synth(self):
@@ -135,16 +138,23 @@ class TS_dataset(Dataset):
             else:
                 if self.test.shape[0] == 0:
                     self.test = this_array
+                    self.test_labels = label
                 else:
                     self.test = np.concatenate([self.test, this_array], axis=0)
+                    self.test_labels = np.append(self.test_labels, label)
 
     def __len__(self):
-        return len(self.labels)
+        if self.isTrain:
+            return len(self.labels)
+        return len(self.test_labels)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        data = self.train[idx, :, :]
-        label = self.labels[idx]
-
+        if self.isTrain:
+            data = self.train[idx, :, :]
+            label = self.labels[idx]
+        else:
+            data = self.test[idx, :, :]
+            label = self.test_labels[idx]
         return data, label
