@@ -24,6 +24,9 @@ def train_model(model, train_dataset, val_dataset,ARGS):
     for epoch in range(1, n_epochs + 1):
         model = model.train()
         train_losses = []
+        train_elbo_loss = []
+        train_log_px_loss = []
+        train_kl_loss = []
         train_dataset_batch = iter(train_dataset)
         for _ in range(len(train_dataset)):
             sample = train_dataset_batch.next()
@@ -32,14 +35,16 @@ def train_model(model, train_dataset, val_dataset,ARGS):
             x = x.permute(1, 0, 2)
             x, z, p_z, q_z_x, p_x_z = model(x)
             loss, elbo, log_px, kl = loss_func(x, z, p_z, p_x_z,q_z_x)
-            temp_train_diagnostics[0] = elbo.mean()
-            temp_train_diagnostics[1] = log_px.mean()
-            temp_train_diagnostics[2] = kl.mean()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            train_elbo_loss.append(elbo.item())
+            train_log_px_loss.append(log_px.item())
+            train_kl_loss.append(kl.item())
             train_losses.append(loss.item())
-        
+        temp_train_diagnostics[0]= np.mean(train_elbo_loss)
+        temp_train_diagnostics[1]= np.mean(train_log_px_loss)
+        temp_train_diagnostics[2]= np.mean(train_kl_loss)
         train_diagnostics_df.loc[epoch-1] = (temp_train_diagnostics)
         val_losses = []
         val_elbo_loss = []
