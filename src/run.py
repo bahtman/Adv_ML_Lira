@@ -115,9 +115,11 @@ if __name__ == '__main__':
 
     if ARGS.generate:
         import matplotlib.pyplot as plt
-        from ReconstructionPlotScriptTest2 import Reconstruct_function
-        logging.info("Running" + Reconstruct_function.__name__)
-        fig, axs = Reconstruct_function(trained_model, test_loader, ARGS.amount_of_plots, ARGS)
+        from ReconstructionPlotScript import Reconstruct_function as recfunct1
+        from ReconstructionPlotScriptTest2 import Reconstruct_function as recfunct2
+        fig, axs = recfunct1(trained_model, test_loader, 5, ARGS)
+        fig, axs = recfunct2(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
+        plt.show()
 
     if ARGS.detect:
         if not os.path.exists(ARGS.trained_model):
@@ -129,7 +131,3 @@ if __name__ == '__main__':
         model = torch.load(ARGS.trained_model)
         detect(model, test_loader, ARGS.device)
 
-        from plotting import make_vae_plots
-        fig, axs = Reconstruct_function(trained_model, test_loader, train_diagnostics, val_diagnostics, ARGS)
-        #make_vae_plots(trained_model, x, y, outputs, training_data, validation_data)
-        plt.show()

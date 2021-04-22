@@ -1,6 +1,5 @@
 import logging
 from  LossFunction import elbo_loss
-from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 
