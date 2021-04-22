@@ -26,11 +26,13 @@ PARSER.add_argument('--dataset', default='generated', help='Which dataset to use
 
 # Training parameters
 PARSER.add_argument('--batch_size', type=int, default=100)
+PARSER.add_argument('--bidir', action='store_true', help='Train a new or restored model.')
 PARSER.add_argument('--time-steps', type=int, default=25, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
 PARSER.add_argument('--latent_dim', type=int, default=2, help='Latent dim')
 PARSER.add_argument('--embedding_dim', type=int, default=64, help='Embedding dimension')
+PARSER.add_argument('--n_layers', type=int, default=16, help='Embedding dimension')
 PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The amount of inputs sequences and their respective reconstructions to be plotted')
 
 import torch.nn as nn

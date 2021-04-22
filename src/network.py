@@ -10,23 +10,27 @@ class VAE(nn.Module):
         self.seq_len, self.n_features = ARGS.time_steps, n_features
         self.embedding_dim, self.hidden_dim = ARGS.embedding_dim, 2 * ARGS.embedding_dim
         self.latent_dim = ARGS.latent_dim
-
+        self.n_layers = ARGS.n_layers
 
         self.p_z = d.Normal(torch.tensor(0., device=ARGS.device), torch.tensor(1., device=ARGS.device))
+        if ARGS.bidir:
+            self.mu_log_sigma = nn.Linear(2*self.embedding_dim * self.seq_len, 2*self.latent_dim)
+            self.genLin = nn.Linear(in_features=self.latent_dim, out_features= self.embedding_dim * self.seq_len)
+            self.rnn1 = nn.LSTM(input_size=self.n_features, hidden_size=self.embedding_dim,num_layers=self.n_layers, bidirectional=True)
+            self.rnn3 = nn.LSTM(input_size=2*self.embedding_dim, hidden_size=self.n_features,num_layers=self.n_layers, bidirectional=True)
+        else:
+            self.mu_log_sigma = nn.Linear(self.embedding_dim * self.seq_len, 2*self.latent_dim)
+            self.genLin = nn.Linear(in_features=self.latent_dim, out_features= self.embedding_dim * self.seq_len)
+            self.rnn1 = nn.LSTM(input_size=self.n_features, hidden_size=self.embedding_dim,num_layers=self.n_layers, bidirectional=False)
+            self.rnn3 = nn.LSTM(input_size=self.embedding_dim, hidden_size=self.n_features,num_layers=self.n_layers, bidirectional=False)
+
         
-        self.mu_log_sigma = nn.Linear(2*self.embedding_dim * self.seq_len, 2*self.latent_dim)
-        self.genLin = nn.Linear(in_features=self.latent_dim, out_features= self.embedding_dim * self.seq_len)
-        self.rnn1 = nn.LSTM(input_size=self.n_features, hidden_size=self.hidden_dim, bidirectional=True)
-        self.rnn2 = nn.LSTM(input_size=self.hidden_dim*2, hidden_size=self.embedding_dim, bidirectional=True)
-        self.rnn3 = nn.LSTM(input_size=self.embedding_dim, hidden_size=self.hidden_dim, bidirectional=True)
-        self.rnn4 = nn.LSTM(input_size=self.hidden_dim*2, hidden_size=self.n_features)
 
     
     def posterior(self, x):
 
         rnn_features, h = self.rnn1(x)
-        rnn_features, h = self.rnn2(rnn_features)
-        x_flattened = rnn_features.reshape(-1, 2 * self.embedding_dim * self.seq_len)
+        x_flattened = rnn_features.reshape(-1,self.embedding_dim * self.seq_len)
         mu, log_sigma = self.mu_log_sigma(x_flattened).chunk(2, dim=-1)
         return d.Normal(mu, log_sigma.exp())
 
@@ -36,7 +40,6 @@ class VAE(nn.Module):
         x = self.genLin(z)
         x = x.reshape(self.seq_len, -1, self.embedding_dim)
         x, h = self.rnn3(x)
-        x, h = self.rnn4(x)
         
         x_flattened = x.reshape(self.seq_len,-1, self.n_features)
 
