@@ -40,8 +40,11 @@ def train_model(model, train_dataset, val_dataset,ARGS):
             optimizer.step()
             train_losses.append(loss.item())
         
-        train_diagnostics_df.loc[epoch-1] = temp_train_diagnostics
+        train_diagnostics_df.loc[epoch-1] = (temp_train_diagnostics)
         val_losses = []
+        val_elbo_loss = []
+        val_log_px_loss = []
+        val_kl_loss = []
         model = model.eval()
         with torch.no_grad():
             val_dataset_batch = iter(val_dataset)
@@ -51,12 +54,14 @@ def train_model(model, train_dataset, val_dataset,ARGS):
                 x = x.permute(1, 0, 2)
                 x, z, p_z, q_z_x, p_x_z = model(x)
                 loss, elbo, log_px, kl = loss_func(x, z, p_z, p_x_z, q_z_x )
-                temp_val_diagnostics[0]= elbo.mean()
-                temp_val_diagnostics[1]= log_px.mean()
-                temp_val_diagnostics[2]= kl.mean()
+                val_elbo_loss.append(elbo.item())
+                val_log_px_loss.append(log_px.item())
+                val_kl_loss.append(kl.item())
                 val_losses.append(loss.item())
-
-        val_diagnostics_df.loc[epoch-1] = temp_val_diagnostics
+        temp_val_diagnostics[0]= np.mean(val_elbo_loss)
+        temp_val_diagnostics[1]= np.mean(val_log_px_loss)
+        temp_val_diagnostics[2]= np.mean(val_kl_loss)
+        val_diagnostics_df.loc[epoch-1] = (temp_val_diagnostics)
         train_loss = np.mean(train_losses)
         val_loss = np.mean(val_losses)
         history['train'].append(train_loss)
