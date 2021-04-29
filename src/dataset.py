@@ -3,6 +3,7 @@ import torch
 import pandas as pd
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
@@ -38,8 +39,8 @@ class TS_dataset(Dataset):
 
             # Generate regular
             samples, signals, errors = reg_timeseries.sample(regular_time_samples)
-            samples -= 0.0
-            samples[samples < 0] = 0
+            #samples -= 0.0
+            #samples[samples < 0] = 0
 
             # Generate defect
             defect_samples, defect_signals, defect_errors = irreg_timeseries.sample(irregular_time_samples)
@@ -50,6 +51,10 @@ class TS_dataset(Dataset):
             data = pd.DataFrame(
                 {'samples': samples + defect_samples, 'labels': [1 if x == 0 else -1 for x in defect_samples]})
             data = data[data.labels == 1]
+            print(samples.shape)
+            plt.plot(samples + defect_samples)
+            plt.show()
+
 
         # Assume data column is always 'samples'
             self.columns = ['samples']
