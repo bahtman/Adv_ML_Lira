@@ -14,6 +14,7 @@ class VAE(nn.Module):
         self.batch_size = ARGS.batch_size
         self.device = ARGS.device
         self.p_z = d.Normal(torch.tensor(0., device=ARGS.device), torch.tensor(1., device=ARGS.device))
+
         if ARGS.bidir:
             self.mu_log_sigma = nn.Linear(2*self.embedding_dim, 2*self.latent_dim)
             self.genLin = nn.Linear(in_features=self.latent_dim, out_features= self.embedding_dim)
@@ -24,36 +25,31 @@ class VAE(nn.Module):
             self.mu_log_sigma = nn.Linear(self.embedding_dim, 2*self.latent_dim)
             self.genLin = nn.Linear(in_features=self.latent_dim, out_features= self.embedding_dim)
             self.rnn1 = nn.LSTM(input_size=self.n_features, hidden_size=self.embedding_dim,num_layers=self.n_layers, bidirectional=False)
-            self.rnn3 = nn.LSTM(input_size=self.n_features, hidden_size=self.embedding_dim,num_layers=self.n_layers, bidirectional=False)
+            self.rnn3 = nn.LSTM(input_size=2, hidden_size=self.embedding_dim,num_layers=self.n_layers, bidirectional=False)
 
         self.hidden_to_output = nn.Linear(self.embedding_dim, self.n_features)
         self.decoder_inputs = torch.zeros(self.seq_len, self.batch_size, self.n_features, requires_grad=True, device=ARGS.device)
         self.c0 = torch.zeros(self.n_layers, self.batch_size, self.embedding_dim, requires_grad=True, device=ARGS.device)
-    
 
-    
     def posterior(self, x):
-
-        rnn_features, (h,c) = self.rnn1(x)
+        h_0 = Variable(torch.randn(self.n_layers, x.shape[1], self.latent_dim, device=self.device))
+        c_0 = Variable(torch.randn(self.n_layers, x.shape[1], self.latent_dim, device=self.device))
+        rnn_features, (h,c) = self.rnn1(x, (h_0, c_0))
         h = h[-1,:,:]
-        x_flattened = h.reshape(-1,self.embedding_dim)
+        x_flattened = h.reshape(-1, self.embedding_dim)
         mu, log_sigma = self.mu_log_sigma(x_flattened).chunk(2, dim=-1)
         return d.Normal(mu, log_sigma.exp())
 
-
-
     def generative(self, z):
         x = self.genLin(z)
-        h_0 = torch.stack([x for _ in range(self.n_layers)])
-        decoder_inputs = torch.zeros(self.seq_len, h_0.shape[1], self.n_features, requires_grad=True, device=self.device)
-        c0 = torch.zeros(self.n_layers, h_0.shape[1], self.embedding_dim, requires_grad=True, device=self.device)
-        decoder_output, _ = self.rnn3(decoder_inputs, (h_0, c0))
-        x = self.hidden_to_output(decoder_output)
-        x_flattened = x.reshape(self.seq_len,-1, self.n_features)
+        h_0 = Variable(torch.randn(self.n_layers, 4, self.latent_dim, device=self.device))
+        c_0 = Variable(torch.randn(self.n_layers, 4, self.latent_dim, device=self.device))
+        x = x.reshape(self.seq_len, -1, self.embedding_dim)
+        _, (hidden_state, _) = self.rnn3(x, (h_0, c_0))
+        x = self.hidden_to_output(hidden_state)
+        #x_flattened = x.reshape(self.seq_len, -1, self.n_features)
         
-        return x_flattened#d.Bernoulli(logits=x_flattened)
-
-
+        return x#d.Bernoulli(logits=x_flattened)
 
     def forward(self, x):
         q_z_x = self.posterior(x) #Posterior

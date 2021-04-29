@@ -35,10 +35,6 @@ PARSER.add_argument('--embedding_dim', type=int, default=64, help='Embedding dim
 PARSER.add_argument('--n_layers', type=int, default=16, help='Embedding dimension')
 PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The amount of inputs sequences and their respective reconstructions to be plotted')
 
-import torch.nn as nn
-
-
-
 if __name__ == '__main__':
     # Setup logging
     logging.basicConfig(

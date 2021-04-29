@@ -36,7 +36,7 @@ def train_model(model, train_dataset, val_dataset,ARGS):
             x, z, p_z, q_z_x, p_x_z = model(x)
             loss, elbo, log_px, kl = loss_func(x, z, p_z, p_x_z,q_z_x)
             optimizer.zero_grad()
-            loss.backward()
+            elbo.backward()
             optimizer.step()
             train_elbo_loss.append(elbo.item())
             train_log_px_loss.append(log_px.item())
