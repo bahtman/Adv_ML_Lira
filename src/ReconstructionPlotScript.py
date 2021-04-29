@@ -15,7 +15,7 @@ def Reconstruct_function(model, test_dataset, n_plots,ARGS):
             x, y = x.float().to(ARGS.device), y.float().to(ARGS.device)
             x = x.permute(1, 0, 2)
             x, z, p_z, q_z_x, p_x_z = model(x)
-            p_x_z = p_x_z.mean
+            p_x_z = p_x_z#.mean
             x,p_x_z = x.cpu(), p_x_z.cpu()
             axs[i].plot(x[:,0,0], label = 'Input data')
             axs[i].plot(p_x_z[:,0,0], label = 'Reconstructed data')

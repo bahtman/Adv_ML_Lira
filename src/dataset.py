@@ -51,9 +51,9 @@ class TS_dataset(Dataset):
             data = pd.DataFrame(
                 {'samples': samples + defect_samples, 'labels': [1 if x == 0 else -1 for x in defect_samples]})
             data = data[data.labels == 1]
-            print(samples.shape)
-            plt.plot(samples + defect_samples)
-            plt.show()
+            #plt.plot(samples + defect_samples)
+            #print(samples.shape)
+            #plt.show()
 
 
         # Assume data column is always 'samples'
