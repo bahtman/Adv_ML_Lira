@@ -28,7 +28,7 @@ class TS_dataset(Dataset):
 
             # Regular signal
             regular_time_samples = time_sampler.sample_regular_time(num_points=1000)
-            reg_signalgen = ts.signals.Sinusoidal(frequency=0.25)
+            reg_signalgen = ts.signals.Sinusoidal(frequency=4)
             noise = ts.noise.GaussianNoise(std=0.1)
             reg_timeseries = ts.TimeSeries(reg_signalgen, noise_generator=noise)
 
