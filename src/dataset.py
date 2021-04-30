@@ -28,7 +28,7 @@ class TS_dataset(Dataset):
 
             # Regular signal
             regular_time_samples = time_sampler.sample_regular_time(num_points=1000)
-            reg_signalgen = ts.signals.Sinusoidal(frequency=0.25)
+            reg_signalgen = ts.signals.Sinusoidal(frequency=4)
             noise = ts.noise.GaussianNoise(std=0.1)
             reg_timeseries = ts.TimeSeries(reg_signalgen, noise_generator=noise)
 
@@ -39,8 +39,8 @@ class TS_dataset(Dataset):
 
             # Generate regular
             samples, signals, errors = reg_timeseries.sample(regular_time_samples)
-            samples -= 0.0
-            samples[samples < 0] = 0
+            #samples -= 0.0
+            #samples[samples < 0] = 0
 
             # Generate defect
             defect_samples, defect_signals, defect_errors = irreg_timeseries.sample(irregular_time_samples)
@@ -51,6 +51,10 @@ class TS_dataset(Dataset):
             data = pd.DataFrame(
                 {'samples': samples + defect_samples, 'labels': [1 if x == 0 else -1 for x in defect_samples]})
             data = data[data.labels == 1]
+            #plt.plot(samples + defect_samples)
+            #print(samples.shape)
+            #plt.show()
+
 
         # Assume data column is always 'samples'
             self.columns = ['samples']

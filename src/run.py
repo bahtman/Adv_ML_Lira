@@ -8,6 +8,7 @@ from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
 import os
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         os.makedirs(ARGS.output_dir)
 
     ARGS.device = torch.device('cuda'
-                               if torch.cuda.is_available() and not None
+                               if torch.cuda.is_available()
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
@@ -93,9 +94,9 @@ if __name__ == '__main__':
     n_test = int(len(val)-n_val)
     val, test = random_split(val, [n_val, n_test])
 
-    train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=False)
-    val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
-    test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
+    train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=True)
+    val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=True)
+    test_loader = DataLoader(test, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
     if ARGS.train:
         trained_model, history, train_diagnostics, val_diagnostics = train_model(
