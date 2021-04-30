@@ -2,8 +2,8 @@ from torch.utils.data import Dataset
 import torch
 import pandas as pd
 import numpy as np
-import pickle
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import pickle5 as pickle
+from sklearn.preprocessing import StandardScaler
 
 
 class TS_dataset(Dataset):
@@ -13,12 +13,13 @@ class TS_dataset(Dataset):
         self.timesteps = timesteps
         if datafile:
             data = pickle.load(open(datafile, 'rb'))
-            data = data[(data['IRI']<=2) | (data['IRI']>=4)]
-            data['labels'] = data['IRI'].apply(lambda x: 1 if x <= 2 else -1)
+            #data = data[(data['IRI']<=2) | (data['IRI']>=4)]
+            data['labels'] = data['IRI_mean'].apply(lambda x: 1 if x <= 2 else -1)
             data = data[data.labels==1]
-            self.columns = columns
+            #self.columns = columns
             self.data = data
-            self.process_gm()
+            self.process_gm_re()
+            #self.process_gm()
         else:
             import symengine
             import timesynth as ts
@@ -55,21 +56,22 @@ class TS_dataset(Dataset):
             self.columns = ['samples']
             self.data = data
             self.process_synth()
-        
+    def process_gm_re(self):
+        array_data = np.vstack(self.data.iloc[:,1].values)
+        standscaler = StandardScaler()
+        self.all_data = standscaler.fit_transform(array_data)
+        self.all_data = np.expand_dims(self.all_data, axis=2)
+        self.labels = self.data['labels'].values
     def process_gm(self):
         self.all_data = np.array([])
         self.labels = np.array([])
-        self.standscaler = StandardScaler()
-        self.mscaler = MinMaxScaler(feature_range=(0, 1))
         self.data.apply(self.gm_apply,axis=1)
             
     def process_synth(self):
 
         # Normalization
         standscaler = StandardScaler()
-        mscaler = MinMaxScaler(feature_range=(0, 1))
         #self.data[self.columns] = standscaler.fit_transform(self.data[self.columns])
-        #self.data[self.columns] = mscaler.fit_transform(self.data[self.columns])
 
         # Init output arrays
         self.all_data = np.array([])

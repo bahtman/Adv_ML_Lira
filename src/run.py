@@ -19,7 +19,7 @@ PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
 PARSER.add_argument('--model', type=int, default=1, help='Choose model for training if "1" the model will be a VAE, if "2" the model will be a normal LSTM.')
 
 # File paths
-PARSER.add_argument('--data_dir', default='./Data/gm_data.pickle', help='Location of dataset.')
+PARSER.add_argument('--data_dir', default='./Data/resampled_df.pickle', help='Location of dataset.')
 PARSER.add_argument('--output_dir', default='./results/')
 PARSER.add_argument('--results_file', default='results.txt', help='Filename where to store settings and test results.')
 PARSER.add_argument('--dataset', default='generated', help='Which dataset to use. [generated|GM]')
@@ -27,12 +27,12 @@ PARSER.add_argument('--dataset', default='generated', help='Which dataset to use
 # Training parameters
 PARSER.add_argument('--batch_size', type=int, default=100)
 PARSER.add_argument('--bidir', action='store_true', help='Train a new or restored model.')
-PARSER.add_argument('--time-steps', type=int, default=25, help='Size of sliding window in time series')
+PARSER.add_argument('--time-steps', type=int, default=369, help='Size of sliding window in time series')
 PARSER.add_argument('--n_epochs', type=int, default=1, help='Number of epochs to train.')
 PARSER.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
 PARSER.add_argument('--latent_dim', type=int, default=2, help='Latent dim')
 PARSER.add_argument('--embedding_dim', type=int, default=64, help='Embedding dimension')
-PARSER.add_argument('--n_layers', type=int, default=16, help='Embedding dimension')
+PARSER.add_argument('--n_layers', type=int, default=12, help='Embedding dimension')
 PARSER.add_argument('--amount_of_plots', type = int, default = 6, help = 'The amount of inputs sequences and their respective reconstructions to be plotted')
 
 import torch.nn as nn
