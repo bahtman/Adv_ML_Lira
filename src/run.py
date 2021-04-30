@@ -8,6 +8,7 @@ from TrainScript import train_model
 from torch.utils.data import DataLoader, random_split
 
 import os
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 PARSER = argparse.ArgumentParser(description='runModel.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -19,9 +20,9 @@ PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
 PARSER.add_argument('--model', type=int, default=1, help='Choose model for training if "1" the model will be a VAE, if "2" the model will be a normal LSTM.')
 
 # File paths
-PARSER.add_argument('--data_dir', default='./Data/gm_data.pickle', help='Location of dataset.')
-PARSER.add_argument('--output_dir', default='./results/')
-PARSER.add_argument('--results_file', default='results.txt', help='Filename where to store settings and test results.')
+PARSER.add_argument('--data_dir', default=f'{BASE_PATH}/Data/gm_data.pickle', help='Location of dataset.')
+PARSER.add_argument('--output_dir', default=f'{BASE_PATH}/results/')
+PARSER.add_argument('--results_file', default=f'{BASE_PATH}/results.txt', help='Filename where to store settings and test results.')
 PARSER.add_argument('--dataset', default='generated', help='Which dataset to use. [generated|GM]')
 
 # Training parameters
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         os.makedirs(ARGS.output_dir)
 
     ARGS.device = torch.device('cuda'
-                               if torch.cuda.is_available() and not None
+                               if torch.cuda.is_available()
                                else 'cpu')
     if ARGS.device.type == 'cuda':
         torch.cuda.manual_seed(ARGS.seed)
