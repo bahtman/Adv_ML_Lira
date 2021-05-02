@@ -6,6 +6,8 @@ from .base import BaseEstimator
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import os
+import matplotlib.pyplot as plt
+import wandb
 
 
 class Encoder(nn.Module):
@@ -157,19 +159,19 @@ class VRAE(BaseEstimator, nn.Module):
     :param optimizer: ADAM/ SGD optimizer to reduce the loss function
     :param loss: SmoothL1Loss / MSELoss / ReconLoss / any custom loss which inherits from `_Loss` class
     :param boolean cuda: to be run on GPU or not
-    :param print_every: The number of iterations after which loss should be printed
     :param boolean clip: Gradient clipping to overcome explosion
     :param max_grad_norm: The grad-norm to be clipped
     :param dload: Download directory where models are to be dumped
+    :param plot_loss: Wether to plot losses during training
     """
     def __init__(self, sequence_length, number_of_features, hidden_size=90, hidden_layer_depth=2, latent_length=20,
                  batch_size=32, learning_rate=0.005, block='LSTM',
                  n_epochs=5, dropout_rate=0., optimizer='Adam', loss='MSELoss',
-                 cuda=False, print_every=100, clip=True, max_grad_norm=5, dload='.'):
+                 cuda=False, clip=True, max_grad_norm=5, dload='.',plot_loss=True):
 
         super(VRAE, self).__init__()
 
-
+        self.plot_loss = plot_loss
         self.dtype = torch.FloatTensor
         self.use_cuda = cuda
 
@@ -208,7 +210,6 @@ class VRAE(BaseEstimator, nn.Module):
         self.learning_rate = learning_rate
         self.n_epochs = n_epochs
 
-        self.print_every = print_every
         self.clip = clip
         self.max_grad_norm = max_grad_norm
         self.is_fitted = False
@@ -285,9 +286,8 @@ class VRAE(BaseEstimator, nn.Module):
         """
         self.train()
 
-        epoch_loss = 0
         t = 0
-
+        losses, recon_losses, kl_losses = [],[],[]
         for t, X in enumerate(train_loader):
 
             # Index first element of array to return tensor
@@ -299,20 +299,21 @@ class VRAE(BaseEstimator, nn.Module):
             self.optimizer.zero_grad()
             loss, recon_loss, kl_loss, _ = self.compute_loss(X)
             loss.backward()
-
+            losses.append(loss.cpu().detach().numpy())
+            recon_losses.append(recon_loss.cpu().detach().numpy())
+            kl_losses.append(kl_loss.cpu().detach().numpy())
             if self.clip:
                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm = self.max_grad_norm)
 
-            # accumulator
-            epoch_loss += loss.item()
 
             self.optimizer.step()
 
-            if (t + 1) % self.print_every == 0:
-                print('Batch %d, loss = %.4f, recon_loss = %.4f, kl_loss = %.4f' % (t + 1, loss.item(),
-                                                                                    recon_loss.item(), kl_loss.item()))
+            if (t + 1) % 20 == 0:
+                print('Batch %d, loss = %.4f, recon_loss = %.4f, kl_loss = %.4f' % (t + 1, np.mean(losses),
+                                                                                    np.mean(recon_losses), np.mean(kl_losses)))
 
-        print('Average loss: {:.4f}'.format(epoch_loss / t))
+        print('Average loss: {:.4f}'.format(np.mean(losses)))
+        return np.mean(losses),np.mean(recon_losses), np.mean(kl_losses)
 
 
     def fit(self, dataset, save = False):
@@ -327,13 +328,36 @@ class VRAE(BaseEstimator, nn.Module):
                                   batch_size = self.batch_size,
                                   shuffle = True,
                                   drop_last=True)
-
+        losses, recon_losses, kl_losses = [],[],[]
         for i in range(self.n_epochs):
             print('Epoch: %s' % i)
 
-            self._train(train_loader)
+            loss, recon, kl = self._train(train_loader)
+            losses.append(loss)
+            recon_losses.append(recon)
+            kl_losses.append(kl)
+            wandb.log({
+            "train_loss":loss,
+            "train_recon": recon,
+            "train_kl": kl
+            })
 
         self.is_fitted = True
+        if self.plot_loss:
+            with torch.no_grad():
+                fig, axs = plt.subplots(3,figsize=(15,15))
+                axs[0].plot(losses, label = 'Elbo loss')
+                axs[1].plot(recon_losses, label = 'Reconstruction loss')
+                axs[2].plot(kl_losses, label = 'Kl divergence')
+
+                axs[0].legend()
+                axs[1].legend()
+                axs[2].legend()
+                for ax in axs.flat:
+                    ax.set(xlabel='epoch', ylabel='loss')
+
+                fig.savefig('loss_plots.png')
+
         if save:
             self.save('model.pth')
 
