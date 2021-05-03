@@ -9,11 +9,6 @@ import plotly
 from torch.utils.data import DataLoader, random_split
 
 
-
-
-plot_loss = True
-
-
 columns= ['acc.xyz.z']
 seq_len = 369
 dataset = TS_dataset(timesteps=seq_len,columns=columns)
