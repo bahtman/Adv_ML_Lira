@@ -425,6 +425,40 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
+    def detect_outlier(self, dataset, save = False):
+        """
+        Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
+        Prerequisite is that model has to be fit
+        :param dataset: input dataset who's output vectors are to be obtained
+        :param bool save: If true, dumps the output vector dataframe as a pickle file
+        :return:
+        """
+
+        self.eval()
+
+        test_loader = DataLoader(dataset = dataset,
+                                 batch_size = self.batch_size,
+                                 shuffle = False,
+                                 drop_last=True) # Don't shuffle for test_loader
+
+        if self.is_fitted:
+            with torch.no_grad():
+                losses = []
+
+                for t, x in enumerate(test_loader):
+                    x = x[0]
+                    x = x.permute(1, 0, 2)
+
+                    x_decoded_each = self._batch_reconstruct(x)
+                    # det fejler pt :( :( 
+                    loss = self.loss_fn(x_decoded_each, x.detach().cpu().numpy())
+                    losses.append(loss.item())
+
+                losses = np.concatenate(losses, axis=1)
+
+                return losses
+
+        raise RuntimeError('Model needs to be fit')
 
     def transform(self, dataset, save = False):
         """
@@ -492,4 +526,7 @@ class VRAE(BaseEstimator, nn.Module):
         :return: None
         """
         self.is_fitted = True
-        self.load_state_dict(torch.load(PATH))
+        if self.use_cuda:
+            self.load_state_dict(torch.load(PATH))
+        else:
+            self.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))

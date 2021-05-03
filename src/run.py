@@ -3,8 +3,7 @@ import argparse
 import logging
 from dataset import TS_dataset
 from network import VAE
-from NormalLSTM import RecurrentAutoencoderLSTM
-from TrainScript import train_model
+#from NormalLSTM import RecurrentAutoencoderLSTM
 from torch.utils.data import DataLoader, random_split
 import torch.nn as nn
 from torch import load
@@ -51,10 +50,6 @@ if __name__ == '__main__':
     # Logging parameters for debugging purposes
     logging.info(ARGS)
 
-    if ARGS.data_dir and not os.path.isfile(ARGS.data_dir):
-        logging.error(f'{ARGS.data_dir} doesn\'t exists')
-        exit(1)
-
     if not os.path.isdir(ARGS.output_dir):
         os.makedirs(ARGS.output_dir)
 
@@ -100,6 +95,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=False)
     
     if ARGS.train:
+        from TrainScript import train_model
         train_loader.dataset.isTrain = True
         val_loader.dataset.isTrain = True
         trained_model, history, train_diagnostics, val_diagnostics = train_model(
@@ -128,6 +124,45 @@ if __name__ == '__main__':
 
         from anomaly_detect_proto import detect
         logging.info('Detecting outliers...')
-        model = torch.load(ARGS.trained_model)
-        detect(model, test_loader, ARGS.device)
+
+        args = DotMap(dict(
+            seq_len=369,
+            n_features = n_features,
+            batch_size = config.batch_size,
+            n_epochs = config.n_epochs,
+            optimizer = 'Adam',
+            clip = True,
+            loss = 'MSELoss',
+            block = 'LSTM',    
+            datafile = f'{os.path.dirname(os.path.abspath(__file__))}/data',
+            seed = 42,
+            results_file = 'result.txt',
+            output_dir = 'results',
+            visualize=True,
+            detectOutlier = True
+        ))
+        args.device = True if torch.cuda.is_available() else False
+        torch.manual_seed(args.seed)
+        #os.mkdir(args.output_dir)
+        if args.device == True : torch.cuda.manual_seed(args.seed)
+
+        vrae = VRAE(sequence_length=args.seq_len,
+                    number_of_features = args.n_features,
+                    hidden_size = config.hidden_size, 
+                    hidden_layer_depth = config.hidden_layer_depth,
+                    latent_length = config.latent_length,
+                    batch_size = args.batch_size,
+                    learning_rate = config.learning_rate,
+                    n_epochs = args.n_epochs,
+                    dropout_rate = config.dropout_rate,
+                    optimizer = args.optimizer, 
+                    cuda = args.device,
+                    clip=args.clip, 
+                    max_grad_norm=config.max_grad_norm,
+                    loss = args.loss,
+                    block = args.block,
+                    plot_loss = args.visualize)
+   
+        vrae.load('vrae/models/model.pth')
+        detect(vrae, test_loader, ARGS.device)
 
