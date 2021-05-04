@@ -473,7 +473,7 @@ class VRAE(BaseEstimator, nn.Module):
                     print(np.nanmax(tmp))
                     if i > 20 and i % 5 == 0:
                         plt.scatter(range(i), tmp[:i])
-                        plt.show(block=False)
+                        plt.show()
                 return anomalies
 
         raise RuntimeError('Model needs to be fit')
