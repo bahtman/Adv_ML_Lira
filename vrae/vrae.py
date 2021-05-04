@@ -462,9 +462,9 @@ class VRAE(BaseEstimator, nn.Module):
                     
                     for l in range(amount_of_samplings):
                         # Draw L samples from z ~ N(mu_z, sigma_z)
-                        l_samples = torch.normal(self.lmbd.latent_mean, std)
+                        latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
                         # Measure loss between reconstruction and sample and call this "reconstruction probability"
-                        x_recon_boi = self.decoder(l_samples)
+                        x_recon_boi = self.decoder(latent_space_samples)
                         loss = self.loss_fn(x_recon_boi, x)
                         loss_l += loss.item()
                     loss_l /= amount_of_samplings
