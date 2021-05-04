@@ -444,37 +444,41 @@ class VRAE(BaseEstimator, nn.Module):
 
         if self.is_fitted:
             with torch.no_grad():
-                anomalies = np.zeros(len(test_loader))
-                tmp = np.zeros(len(test_loader))
-                tmp.fill(np.nan)
+                tmp = np.zeros(len(dataset))
+                current_index = 0
                 for i, x in enumerate(test_loader):
+                    print('next batch', i)
                     x = x[0]
                     x = x.permute(1, 0, 2)
-                    loss_l = 0
-
                     _x = Variable(x.type(self.dtype), requires_grad = False)
-                    # Run the sample through the encoder and decoder. 
+                    # Run the batch through the encoder and decoder. 
                     # latent_mean and latent_logvar comes from latent space from encoder, after being run through the 
                     # Lambda class. 
                     x_recon, latent = self(_x)
-                    std = torch.exp(0.5 * self.lmbd.latent_logvar)
                     
                     for l in range(amount_of_samplings):
-                        # Draw L samples from z ~ N(mu_z, sigma_z)
+                        # Draw batch_size*L samples from z ~ N(mu_z, sigma_z)
+                        std = torch.exp(0.5 * self.lmbd.latent_logvar)
                         latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
-                        # Measure loss between reconstruction and sample and call this "reconstruction probability"
-                        x_recon_boi = self.decoder(latent_space_samples)
-                        loss = self.loss_fn(x_recon_boi, x)
-                        loss_l += loss.item()
-                    loss_l /= amount_of_samplings
-                    tmp[i] = loss_l
-                    # Marks the sample as an outlier if reconstruction probability > \alpha
-                    anomalies[i] = int(loss_l > threshhold)
-                    print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { bool(anomalies[i]) }")
-
-                    if self.plot_loss and i > 20 and i % 5 == 0:
-                        plt.scatter(range(i), tmp[:i])
-                        plt.show()
+                        x_recon_batch = self.decoder(latent_space_samples)
+                        for j in range(self.batch_size):
+                            x_single = x[:,j,:]
+                            x_recon_single = x_recon_batch[:,j,:]
+                            # Measure loss between reconstruction and sample and call this "reconstruction probability"
+                            tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
+                            # print(i*self.batch_size+j)
+                
+                tmp /= amount_of_samplings
+                # Marks the sample as an outlier if reconstruction probability > \alpha
+                #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
+                indices_outlier = np.where(dataset.labels == -1)[0]
+                indices = np.where(dataset.labels == 1)[0]
+                asd = np.array(range(len(dataset)))
+                plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='-1')
+                plt.scatter(asd[indices], tmp[indices], label='1')
+                plt.legend()
+                plt.show()
+                anomalies = [-1 if x > threshhold else 1 for x in tmp]
                 return anomalies
 
         raise RuntimeError('Model needs to be fit')
