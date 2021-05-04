@@ -448,7 +448,6 @@ class VRAE(BaseEstimator, nn.Module):
                 tmp = np.zeros(len(test_loader))
                 tmp.fill(np.nan)
                 for i, x in enumerate(test_loader):
-                    print(f"Sample no. {i}")
                     x = x[0]
                     x = x.permute(1, 0, 2)
                     loss_l = 0
@@ -471,10 +470,9 @@ class VRAE(BaseEstimator, nn.Module):
                     tmp[i] = loss_l
                     # Marks the sample as an outlier if reconstruction probability > \alpha
                     anomalies[i] = int(loss_l > threshhold)
-                    print(np.nanmean(tmp))
-                    print(np.nanmin(tmp))
-                    print(np.nanmax(tmp))
-                    if i > 20 and i % 5 == 0:
+                    print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { bool(anomalies[i]) }")
+
+                    if self.plot_loss and i > 20 and i % 5 == 0:
                         plt.scatter(range(i), tmp[:i])
                         plt.show()
                 return anomalies

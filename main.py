@@ -47,8 +47,9 @@ args = DotMap(dict(
     seed = 42,
     results_file = 'result.txt',
     output_dir = 'results',
-    visualize=True,
-    detectOutlier = True
+    visualize=False,
+    train = False,
+    detectOutliers = True
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -71,16 +72,20 @@ vrae = VRAE(sequence_length=args.seq_len,
             loss = args.loss,
             block = args.block,
             plot_loss = args.visualize)
-if False:
+
+if args.train:
+    print('Training VRAE model')
     vrae.fit(train)
-else: 
+
+if args.detectOutliers: 
+    print("Detecting outliers")
     vrae.load('vrae/models/model.pth')
-    from vrae.anomaly_detect_proto import detect
+    from vrae.detect import detect
     detect(vrae, dataset, args.device)
 
 if args.visualize:
+    print("Visualizing validation set with VRAE")
     x_decoded = vrae.reconstruct(val)
-
 
     with torch.no_grad():  
         n_plots = 5
