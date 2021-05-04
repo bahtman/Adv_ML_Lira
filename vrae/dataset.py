@@ -16,7 +16,7 @@ class TS_dataset(Dataset):
             data = pickle.load(open(datafile, 'rb'))
             data['labels'] = data['IRI_mean'].apply(lambda x: 1 if x <= 2 else -1)
             #data = data[data.labels==1]
-            #self.columns = columns
+            self.columns = columns
             self.data = data
             self.process_gm_re()
         else:

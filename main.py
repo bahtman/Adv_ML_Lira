@@ -12,9 +12,9 @@ from torch.utils.data import DataLoader, random_split
 
 columns= ['acc.xyz.z']
 seq_len = 369
-train = TS_dataset(timesteps=seq_len,columns=columns,type='train')
-val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
-test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
+train = TS_dataset(datafile = "./Data/resampled_df.pickle",timesteps=seq_len,columns=columns,type='train')
+val = TS_dataset(datafile = "./Data/resampled_df.pickle",timesteps=seq_len,columns=columns,type='val')
+test = TS_dataset(datafile = "./Data/resampled_df.pickle",timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
 

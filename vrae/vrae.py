@@ -8,6 +8,7 @@ from torch.autograd import Variable
 import os
 import matplotlib.pyplot as plt
 import wandb
+from sklearn.metrics import roc_curve
 
 
 class Encoder(nn.Module):
