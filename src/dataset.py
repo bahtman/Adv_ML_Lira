@@ -2,35 +2,25 @@ from torch.utils.data import Dataset
 import torch
 import pandas as pd
 import numpy as np
-import pickle
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-import logging
+import pickle5 as pickle
+from sklearn.preprocessing import StandardScaler
+
 
 class TS_dataset(Dataset):
 
-    def __init__(self, datafile=None, timesteps=10, columns=['acc.xyz.z'], isTrain=True):
-        self.isTrain = isTrain
+    def __init__(self, datafile=None, timesteps=10,columns=['acc.xyz.z']):
+        
         self.timesteps = timesteps
         if datafile:
-            # GreenMobility dataset
             data = pickle.load(open(datafile, 'rb'))
-            data = data[(data['IRI']<=2) | (data['IRI']>=4)]
-            data['labels'] = data['IRI'].apply(lambda x: 1 if x <= 2 else -1) # Train on low IRI = good road.
-
-            df_no_outliers = data[data.labels==1]
-            msk = np.random.rand(len(df_no_outliers)) < 0.7
-            train = df_no_outliers[msk]
-            test = df_no_outliers[~msk]
-
-            self.data_test = pd.concat([data[data.labels==-1], test])
-            self.data = train
-            logging.info(f'Test set has {len(self.data_test)} samples')
-            logging.info(f'Train set has {len(self.data)} samples')
-            self.columns = columns
-            self.process_gm()
-
+            #data = data[(data['IRI']<=2) | (data['IRI']>=4)]
+            data['labels'] = data['IRI_mean'].apply(lambda x: 1 if x <= 2 else -1)
+            data = data[data.labels==1]
+            #self.columns = columns
+            self.data = data
+            self.process_gm_re()
+            #self.process_gm()
         else:
-            # Synthetic data
             import symengine
             import timesynth as ts
             # Initialize samplers
@@ -38,7 +28,7 @@ class TS_dataset(Dataset):
 
             # Regular signal
             regular_time_samples = time_sampler.sample_regular_time(num_points=1000)
-            reg_signalgen = ts.signals.Sinusoidal(frequency=0.25)
+            reg_signalgen = ts.signals.Sinusoidal(frequency=4)
             noise = ts.noise.GaussianNoise(std=0.1)
             reg_timeseries = ts.TimeSeries(reg_signalgen, noise_generator=noise)
 
@@ -49,8 +39,8 @@ class TS_dataset(Dataset):
 
             # Generate regular
             samples, signals, errors = reg_timeseries.sample(regular_time_samples)
-            samples -= 0.0
-            samples[samples < 0] = 0
+            #samples -= 0.0
+            #samples[samples < 0] = 0
 
             # Generate defect
             defect_samples, defect_signals, defect_errors = irreg_timeseries.sample(irregular_time_samples)
@@ -61,33 +51,31 @@ class TS_dataset(Dataset):
             data = pd.DataFrame(
                 {'samples': samples + defect_samples, 'labels': [1 if x == 0 else -1 for x in defect_samples]})
             data = data[data.labels == 1]
+            #plt.plot(samples + defect_samples)
+            #print(samples.shape)
+            #plt.show()
+
 
         # Assume data column is always 'samples'
             self.columns = ['samples']
             self.data = data
             self.process_synth()
-        
+    def process_gm_re(self):
+        array_data = np.vstack(self.data.iloc[:,1].values)
+        standscaler = StandardScaler()
+        self.all_data = standscaler.fit_transform(array_data)
+        self.all_data = np.expand_dims(self.all_data, axis=2)
+        self.labels = self.data['labels'].values
     def process_gm(self):
-        self.train = np.array([])
+        self.all_data = np.array([])
         self.labels = np.array([])
-        # how to retrieve test?
-        self.test = np.array([])
-
-        self.standscaler = StandardScaler()
-        self.mscaler = MinMaxScaler(feature_range=(0, 1))
-        
-        logging.info('Preprocessing train')
-        self.data.apply(self.gm_apply, axis=1, args=(['train']))
-        logging.info('Preprocessing test')
-        self.data_test.apply(self.gm_apply, axis=1, args=(['test']))
+        self.data.apply(self.gm_apply,axis=1)
             
     def process_synth(self):
 
         # Normalization
         standscaler = StandardScaler()
-        mscaler = MinMaxScaler(feature_range=(0, 1))
         #self.data[self.columns] = standscaler.fit_transform(self.data[self.columns])
-        #self.data[self.columns] = mscaler.fit_transform(self.data[self.columns])
 
         # Init output arrays
         self.all_data = np.array([])
@@ -111,47 +99,33 @@ class TS_dataset(Dataset):
             else:
                 self.all_data = np.concatenate([self.all_data, this_array], axis=0)
                 self.labels = np.append(self.labels, this_label)
-    def gm_apply(self, row, dest):
+    def gm_apply(self,row):
         label = row['labels']
         row = row[self.columns]
         data_np = np.zeros((row.iloc[0].shape[0],row.shape[0]))
 
         for i,col in enumerate(row):
             data_np[:,i] = col
+
         
         data_np = self.standscaler.fit_transform(data_np)
         data_np = self.mscaler.fit_transform(data_np)
-
         for index in range(data_np.shape[0] - self.timesteps + 1):
-            this_array = data_np[index:index + self.timesteps].reshape((-1, self.timesteps, len(self.columns)))
-            # fugly code
-            if dest == 'train':
-                if self.train.shape[0] == 0:
-                    self.train = this_array
+                this_array = data_np[index:index + self.timesteps].reshape((-1, self.timesteps, len(self.columns)))
+                
+                if self.all_data.shape[0] == 0:
+                    self.all_data = this_array
                     self.labels = label
                 else:
-                    self.train = np.concatenate([self.train, this_array], axis=0)
+                    self.all_data = np.concatenate([self.all_data, this_array], axis=0)
                     self.labels = np.append(self.labels, label)
-            else:
-                if self.test.shape[0] == 0:
-                    self.test = this_array
-                    self.test_labels = label
-                else:
-                    self.test = np.concatenate([self.test, this_array], axis=0)
-                    self.test_labels = np.append(self.test_labels, label)
-
     def __len__(self):
-        if self.isTrain:
-            return len(self.labels)
-        return len(self.test_labels)
+        return len(self.labels)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        if self.isTrain:
-            data = self.train[idx, :, :]
-            label = self.labels[idx]
-        else:
-            data = self.test[idx, :, :]
-            label = self.test_labels[idx]
+        data = self.all_data[idx, :, :]
+        label = self.labels[idx]
+
         return data, label
