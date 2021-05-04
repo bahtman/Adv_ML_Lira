@@ -452,10 +452,17 @@ class VRAE(BaseEstimator, nn.Module):
                     x = x[0]
                     x = x.permute(1, 0, 2)
                     loss_l = 0
+
+                    _x = Variable(x.type(self.dtype), requires_grad = False)
+                    x_recon, latent = self(_x)
+                    std = torch.exp(0.5 * self.lmbd.latent_logvar)
+                    
                     for l in range(amount_of_samplings):
-                        x_decoded_each = self._batch_reconstruct(x, tensor=True)
+                        # Draw L samples from z ~ N(mu_z, sigma_z)
+                        l_samples = torch.normal(self.lmbd.latent_mean, std)
                         # Measure loss between reconstruction and sample and call this "reconstruction probability"
-                        loss = self.loss_fn(x_decoded_each, x)
+                        x_recon_boi = self.decoder(l_samples)
+                        loss = self.loss_fn(x_recon_boi, x)
                         loss_l += loss.item()
                     loss_l /= amount_of_samplings
                     tmp[i] = loss_l
@@ -466,7 +473,7 @@ class VRAE(BaseEstimator, nn.Module):
                     print(np.nanmax(tmp))
                     if i > 20 and i % 5 == 0:
                         plt.scatter(range(i), tmp[:i])
-                        plt.show()
+                        plt.show(block=False)
                 return anomalies
 
         raise RuntimeError('Model needs to be fit')
