@@ -442,47 +442,45 @@ class VRAE(BaseEstimator, nn.Module):
                                  shuffle = False,
                                  drop_last=True) # Don't shuffle for test_loader
 
-        if self.is_fitted:
-            with torch.no_grad():
-                tmp = np.zeros(len(dataset))
-                current_index = 0
-                for i, x in enumerate(test_loader):
-                    print('next batch', i)
-                    x = x[0]
-                    x = x.permute(1, 0, 2)
-                    _x = Variable(x.type(self.dtype), requires_grad = False)
-                    # Run the batch through the encoder and decoder. 
-                    # latent_mean and latent_logvar comes from latent space from encoder, after being run through the 
-                    # Lambda class. 
-                    x_recon, latent = self(_x)
-                    
-                    for l in range(amount_of_samplings):
-                        # Draw batch_size*L samples from z ~ N(mu_z, sigma_z)
-                        std = torch.exp(0.5 * self.lmbd.latent_logvar)
-                        latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
-                        x_recon_batch = self.decoder(latent_space_samples)
-                        for j in range(self.batch_size):
-                            x_single = x[:,j,:]
-                            x_recon_single = x_recon_batch[:,j,:]
-                            # Measure loss between reconstruction and sample and call this "reconstruction probability"
-                            tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
-                            # print(i*self.batch_size+j)
+        if not self.is_fitted:
+            raise RuntimeError('Model needs to be fit')
+
+        with torch.no_grad():
+            tmp = np.zeros(len(dataset))
+            for i, x in enumerate(test_loader):
+                print('next batch', i)
+                x = x[0]
+                x = x.permute(1, 0, 2)
+                _x = Variable(x.type(self.dtype), requires_grad = False)
+                # Run the batch through the encoder and decoder. 
+                # latent_mean and latent_logvar comes from latent space from encoder, after being run through the 
+                # Lambda class. 
+                x_recon, latent = self(_x)
                 
-                tmp /= amount_of_samplings
-                # Marks the sample as an outlier if reconstruction probability > \alpha
-                #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
-                indices_outlier = np.where(dataset.labels == -1)[0]
-                indices = np.where(dataset.labels == 1)[0]
-                asd = np.array(range(len(dataset)))
-                plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='-1')
-                plt.scatter(asd[indices], tmp[indices], label='1')
-                plt.legend()
-                plt.show()
-                anomalies = [-1 if x > threshhold else 1 for x in tmp]
-                return anomalies
-
-        raise RuntimeError('Model needs to be fit')
-
+                for l in range(amount_of_samplings):
+                    # Draw batch_size*L samples from z ~ N(mu_z, sigma_z)
+                    std = torch.exp(0.5 * self.lmbd.latent_logvar)
+                    latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
+                    x_recon_batch = self.decoder(latent_space_samples)
+                    for j in range(self.batch_size):
+                        x_single = x[:,j,:]
+                        x_recon_single = x_recon_batch[:,j,:]
+                        # Measure loss between reconstruction and sample and call this "reconstruction probability"
+                        tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
+                        # print(i*self.batch_size+j)
+            
+            tmp /= amount_of_samplings
+            # Marks the sample as an outlier if reconstruction probability > \alpha
+            #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
+            indices_outlier = np.where(dataset.labels == -1)[0]
+            indices = np.where(dataset.labels == 1)[0]
+            asd = np.array(range(len(dataset)))
+            plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='-1')
+            plt.scatter(asd[indices], tmp[indices], label='1')
+            plt.legend()
+            plt.show()
+            anomalies = [-1 if x > threshhold else 1 for x in tmp]
+        return anomalies
     def transform(self, dataset, save = False):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_transform`
