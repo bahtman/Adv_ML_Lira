@@ -374,7 +374,7 @@ class VRAE(BaseEstimator, nn.Module):
                     )
         ).cpu().data.numpy()
 
-    def _batch_reconstruct(self, x):
+    def _batch_reconstruct(self, x, tensor=False):
         """
         Passes the given input tensor into encoder, lambda and decoder function
         :param x: input batch tensor
@@ -383,7 +383,8 @@ class VRAE(BaseEstimator, nn.Module):
 
         x = Variable(x.type(self.dtype), requires_grad = False)
         x_decoded, _ = self(x)
-
+        if tensor:
+            return x_decoded
         return x_decoded.cpu().data.numpy()
 
     def reconstruct(self, dataset, save = False):
@@ -425,7 +426,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
-    def detect_outlier(self, dataset, save = False):
+    def detect_outlier(self, dataset, amount_of_samplings=50, threshhold = 1600):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
         Prerequisite is that model has to be fit
@@ -443,20 +444,28 @@ class VRAE(BaseEstimator, nn.Module):
 
         if self.is_fitted:
             with torch.no_grad():
-                losses = []
-
-                for t, x in enumerate(test_loader):
+                anomalies = np.zeros(len(test_loader))
+                tmp = np.zeros(len(test_loader))
+                tmp.fill(np.nan)
+                for i, x in enumerate(test_loader):
+                    print(f"Sample no. {i}")
                     x = x[0]
                     x = x.permute(1, 0, 2)
+                    loss_l = 0
+                    for l in range(amount_of_samplings):
+                        x_decoded_each = self._batch_reconstruct(x, tensor=True)
+                        # Measure loss between reconstruction and sample and call this "reconstruction probability"
+                        loss = self.loss_fn(x_decoded_each, x)
+                        loss_l += loss.item()
+                    loss_l /= amount_of_samplings
+                    tmp[i] = loss_l
+                    # Marks the sample as an outlier if reconstruction probability > \alpha
+                    anomalies[i] = int(loss_l > threshhold)
+                    print(np.nanmean(tmp))
+                    print(np.nanmin(tmp))
+                    print(np.nanmax(tmp))
 
-                    x_decoded_each = self._batch_reconstruct(x)
-                    # det fejler pt :( :( 
-                    loss = self.loss_fn(x_decoded_each, x.detach().cpu().numpy())
-                    losses.append(loss.item())
-
-                losses = np.concatenate(losses, axis=1)
-
-                return losses
+                return anomalies
 
         raise RuntimeError('Model needs to be fit')
 
