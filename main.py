@@ -79,7 +79,7 @@ vrae = VRAE(sequence_length=args.seq_len,
 
 if args.train:
     print('Training VRAE model')
-    vrae.fit(train, save=True)
+    vrae.fit(train,val, save=True)
 
 if args.detectOutliers: 
     print("Detecting outliers")
