@@ -1,0 +1,13 @@
+#!/bin/bash
+
+module load python3/3.8.2 &>/dev/null
+module load openblas/0.3.5 &>/dev/null
+
+module load cuda/10.2 &>/dev/null
+
+# faiss depends on libomp and libstdc++
+module load clang/8.0.0 &>/dev/null
+module load gcc/7.4.0 &>/dev/null
+
+
+python3 "$@"
