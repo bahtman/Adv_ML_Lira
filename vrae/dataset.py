@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import pickle5 as pickle
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 
 class TS_dataset(Dataset):
@@ -32,9 +33,15 @@ class TS_dataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
+        test_percent = 0.1
+        val_percent = 0.2
+
         if torch.is_tensor(idx):
             idx = idx.tolist()
         data = self.all_data[idx, :, :]
         label = self.labels[idx]
-
-        return data, label
+        train, test_val, train_label, test_val_label = train_test_split(data, label, test_size = 0.3, random_state=42)
+        val, test, val_label, test_label = train_test_split(test_val, test_val_label, test_size = 0.33, random_state = 42)
+        train = train[train_label == 1]
+        train_label = train_label[train_label == 1]
+        return train, train_label, val, val_label, test, test_label
