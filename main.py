@@ -12,10 +12,11 @@ from torch.utils.data import DataLoader, random_split
 
 columns= ['acc.xyz.z']
 seq_len = 369
-dataset = TS_dataset(timesteps=seq_len,columns=columns)
+train = TS_dataset(timesteps=seq_len,columns=columns,type='train')
+val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
+test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
-train, val, test = Split_Function(dataset)
 
 #val_percent = 0.1
 #n_val = int(len(dataset) * val_percent)
@@ -28,7 +29,7 @@ hyperparameter_defaults = dict(
         latent_length = 20,
         batch_size = 32,
         learning_rate = 0.0005,
-        n_epochs = 2,
+        n_epochs = 60,
         dropout_rate = 0.2,
         max_grad_norm=5
         )
