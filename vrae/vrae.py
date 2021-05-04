@@ -426,7 +426,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
-    def detect_outlier(self, dataset, amount_of_samplings=15, threshhold = 2000):
+    def detect_outlier(self, dataset, amount_of_samplings=15, threshhold = 1500):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
         Prerequisite is that model has to be fit
@@ -454,6 +454,9 @@ class VRAE(BaseEstimator, nn.Module):
                     loss_l = 0
 
                     _x = Variable(x.type(self.dtype), requires_grad = False)
+                    # Run the sample through the encoder and decoder. 
+                    # latent_mean and latent_logvar comes from latent space from encoder, after being run through the 
+                    # Lambda class. 
                     x_recon, latent = self(_x)
                     std = torch.exp(0.5 * self.lmbd.latent_logvar)
                     
