@@ -278,7 +278,7 @@ class VRAE(BaseEstimator, nn.Module):
         return loss, recon_loss, kl_loss, x
 
 
-    def _train(self, train_loader):
+    def _train(self, train_loader, val_loader):
         """
         For each epoch, given the batch_size, run this function batch_size * num_of_batches number of times
         :param train_loader:input train loader with shuffle
@@ -313,10 +313,27 @@ class VRAE(BaseEstimator, nn.Module):
                                                                                     np.mean(recon_losses), np.mean(kl_losses)))
 
         print('Average loss: {:.4f}'.format(np.mean(losses)))
-        return np.mean(losses),np.mean(recon_losses), np.mean(kl_losses)
+        self.eval()
+
+        t = 0
+        val_losses = []
+        for t, X in enumerate(val_loader):
+
+            # Index first element of array to return tensor
+            X = X[0]
+
+            # required to swap axes, since dataloader gives output in (batch_size x seq_len x num_of_features)
+            X = X.permute(1,0,2)
+
+            loss, recon_loss, kl_loss, _ = self.compute_loss(X)
+            val_losses.append(loss.cpu().detach().numpy())
 
 
-    def fit(self, dataset, save = False):
+        print('Average loss: {:.4f}'.format(np.mean(val_losses)))
+        return np.mean(losses),np.mean(recon_losses), np.mean(kl_losses), np.mean(val_losses)
+
+
+    def fit(self, train_dataset,val_dataset, save = False):
         """
         Calls `_train` function over a fixed number of epochs, specified by `n_epochs`
         :param dataset: `Dataset` object
@@ -324,29 +341,36 @@ class VRAE(BaseEstimator, nn.Module):
         :return:
         """
 
-        train_loader = DataLoader(dataset = dataset,
+        train_loader = DataLoader(dataset = train_dataset,
                                   batch_size = self.batch_size,
                                   shuffle = True,
                                   drop_last=True)
-        losses, recon_losses, kl_losses = [],[],[]
+        val_loader = DataLoader(dataset = val_dataset,
+                                    batch_size = self.batch_size,
+                                    shuffle = False,
+                                    drop_last=True)
+        losses, recon_losses, kl_losses, val_losses = [],[],[], []
         for i in range(self.n_epochs):
             print('Epoch: %s' % i)
 
-            loss, recon, kl = self._train(train_loader)
+            loss, recon, kl, val_loss = self._train(train_loader,val_loader)
             losses.append(loss)
             recon_losses.append(recon)
             kl_losses.append(kl)
+            val_losses.append(val_loss)
             wandb.log({
             "train_loss":loss,
             "train_recon": recon,
-            "train_kl": kl
+            "train_kl": kl,
+            "val_loss":val_loss
             })
 
         self.is_fitted = True
         if self.plot_loss:
             with torch.no_grad():
                 fig, axs = plt.subplots(3,figsize=(15,15))
-                axs[0].plot(losses, label = 'Elbo loss')
+                axs[0].plot(losses, label = 'Elbo loss for train')
+                axs[0].plot(val_losses, label = 'Elbo loss for val')
                 axs[1].plot(recon_losses, label = 'Reconstruction loss')
                 axs[2].plot(kl_losses, label = 'Kl divergence')
 
