@@ -426,7 +426,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
-    def detect_outlier(self, dataset, amount_of_samplings=50, threshhold = 2000):
+    def detect_outlier(self, dataset, amount_of_samplings=15, threshhold = 2000):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
         Prerequisite is that model has to be fit
@@ -464,7 +464,9 @@ class VRAE(BaseEstimator, nn.Module):
                     print(np.nanmean(tmp))
                     print(np.nanmin(tmp))
                     print(np.nanmax(tmp))
-
+                    if i > 20 and i % 5 == 0:
+                        plt.scatter(range(i), tmp[:i])
+                        plt.show()
                 return anomalies
 
         raise RuntimeError('Model needs to be fit')
