@@ -72,7 +72,7 @@ vrae = VRAE(sequence_length=args.seq_len,
             block = args.block,
             plot_loss = args.visualize)
 
-vrae.fit(train)
+vrae.fit(train, save=True)
 x_decoded = vrae.reconstruct(val)
 
 
