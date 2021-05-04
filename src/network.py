@@ -27,8 +27,8 @@ class VAE(nn.Module):
             self.rnn3 = nn.LSTM(input_size=self.n_features, hidden_size=self.embedding_dim,num_layers=self.n_layers, bidirectional=False)
 
         self.hidden_to_output = nn.Linear(self.embedding_dim, self.n_features)
-        self.decoder_inputs = torch.ones(self.seq_len, self.batch_size, self.n_features, requires_grad=True, device=ARGS.device)
-        self.c0 = torch.ones(self.n_layers, self.batch_size, self.embedding_dim, requires_grad=True, device=ARGS.device)
+        self.decoder_inputs = torch.zeros(self.seq_len, self.batch_size, self.n_features, requires_grad=True, device=ARGS.device)
+        self.c0 = torch.zeros(self.n_layers, self.batch_size, self.embedding_dim, requires_grad=True, device=ARGS.device)
         nn.init.xavier_uniform_(self.hidden_to_output.weight)
         nn.init.xavier_uniform_(self.genLin.weight)
         nn.init.xavier_uniform_(self.mu_log_sigma.weight)
