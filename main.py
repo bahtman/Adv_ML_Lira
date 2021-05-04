@@ -1,5 +1,6 @@
 from vrae.vrae import VRAE
 from vrae.utils import *
+from vrae.SplitDataSet import Split_Function
 import numpy as np
 import torch
 from vrae.dataset import *
@@ -14,10 +15,12 @@ seq_len = 369
 dataset = TS_dataset(timesteps=seq_len,columns=columns)
 n_features= len(columns)
 
-val_percent = 0.1
-n_val = int(len(dataset) * val_percent)
-n_train = len(dataset) - n_val
-train, val = random_split(dataset, [n_train, n_val])
+train, val, test = Split_Function(dataset)
+
+#val_percent = 0.1
+#n_val = int(len(dataset) * val_percent)
+#n_train = len(dataset) - n_val
+#train, val = random_split(dataset, [n_train, n_val])
 
 hyperparameter_defaults = dict(
         hidden_size = 90, 
