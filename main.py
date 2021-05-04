@@ -24,7 +24,6 @@ n_features= len(columns)
 #train, val = random_split(dataset, [n_train, n_val])
 
 hyperparameter_defaults = dict(
-        
         hidden_size = 90, 
         hidden_layer_depth = 2,
         latent_length = 20,
@@ -40,19 +39,21 @@ config = DotMap(hyperparameter_defaults)
 wandb.init(config = hyperparameter_defaults,project="VRAE")
 config = wandb.config
 args = DotMap(dict(
-seq_len=369,
-n_features = n_features,
-batch_size = config.batch_size,
-n_epochs = config.n_epochs,
-optimizer = 'Adam',
-clip = True,
-loss = 'MSELoss',
-block = 'LSTM',    
-datafile = f'{os.path.dirname(os.path.abspath(__file__))}/data',
-seed = 42,
-results_file = 'result.txt',
-output_dir = 'results',
-visualize=True
+    seq_len=369,
+    n_features = n_features,
+    batch_size = config.batch_size,
+    n_epochs = config.n_epochs,
+    optimizer = 'Adam',
+    clip = True,
+    loss = 'MSELoss',
+    block = 'LSTM',    
+    datafile = f'{os.path.dirname(os.path.abspath(__file__))}/data',
+    seed = 42,
+    results_file = 'result.txt',
+    output_dir = 'results',
+    visualize=False,
+    train = True,
+    detectOutliers = False
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -76,20 +77,30 @@ vrae = VRAE(sequence_length=args.seq_len,
             block = args.block,
             plot_loss = args.visualize)
 
-vrae.fit(train, save=True)
-x_decoded = vrae.reconstruct(val)
+if args.train:
+    print('Training VRAE model')
+    vrae.fit(train, save=True)
+
+if args.detectOutliers: 
+    print("Detecting outliers")
+    vrae.load('vrae/models/model.pth')
+    from vrae.detect import detect
+    detect(vrae, test, args.device)
+
+if args.visualize:
+    print("Visualizing validation set with VRAE")
+    x_decoded = vrae.reconstruct(val)
+
+    with torch.no_grad():  
+        n_plots = 5
+        x,label = val[0:n_plots]
+        fig, axs = plt.subplots(n_plots, figsize = (15,15))
+        for i in range(n_plots):
+            axs[i].plot(x[i,:,0], label = 'Input data')
+            axs[i].plot(x_decoded[:,i,0], label = 'Reconstructed data')
 
 
-with torch.no_grad():  
-    n_plots = 5
-    x,label = val[0:n_plots]
-    fig, axs = plt.subplots(n_plots, figsize = (15,15))
-    for i in range(n_plots):
-        axs[i].plot(x[i,:,0], label = 'Input data')
-        axs[i].plot(x_decoded[:,i,0], label = 'Reconstructed data')
-
-
-    for ax in axs.flat:
-        ax.set(xlabel='time', ylabel='y-value :)')
-    wandb.log({f"Reconstructions":fig})
-    fig.savefig('generated_samples.png')
+        for ax in axs.flat:
+            ax.set(xlabel='time', ylabel='y-value :)')
+        wandb.log({f"Reconstructions":fig})
+        fig.savefig('generated_samples.png')
