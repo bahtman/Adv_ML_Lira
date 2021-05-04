@@ -84,7 +84,7 @@ if args.detectOutliers:
     print("Detecting outliers")
     vrae.load('vrae/models/model.pth')
     from vrae.detect import detect
-    detect(vrae, dataset, args.device)
+    detect(vrae, test, args.device)
 
 if args.visualize:
     print("Visualizing validation set with VRAE")
