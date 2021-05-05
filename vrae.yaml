@@ -2,7 +2,7 @@ program: main.py
 method: bayes
 metric:
   goal: minimize
-  name: val_loss
+  name: train_loss
 parameters:
   hidden_size:
     min: 5
@@ -18,14 +18,13 @@ parameters:
     max: 10
   dropout_rate:
     min: 0.01
-    max: 0.99
+    max: 0.9
 
   learning_rate:
     min: 0.0001
     max: 0.1
   epochs:
-    min: 50
-    max: 150
+    value: 50
 command:
 - bash
 - python3

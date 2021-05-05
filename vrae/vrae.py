@@ -8,6 +8,7 @@ from torch.autograd import Variable
 import os
 import matplotlib.pyplot as plt
 import wandb
+from sklearn.metrics import roc_curve
 
 
 class Encoder(nn.Module):
@@ -278,7 +279,7 @@ class VRAE(BaseEstimator, nn.Module):
         return loss, recon_loss, kl_loss, x
 
 
-    def _train(self, train_loader):
+    def _train(self, train_loader, val_loader):
         """
         For each epoch, given the batch_size, run this function batch_size * num_of_batches number of times
         :param train_loader:input train loader with shuffle
@@ -313,10 +314,27 @@ class VRAE(BaseEstimator, nn.Module):
                                                                                     np.mean(recon_losses), np.mean(kl_losses)))
 
         print('Average loss: {:.4f}'.format(np.mean(losses)))
-        return np.mean(losses),np.mean(recon_losses), np.mean(kl_losses)
+        self.eval()
+
+        t = 0
+        val_losses = []
+        for t, X in enumerate(val_loader):
+
+            # Index first element of array to return tensor
+            X = X[0]
+
+            # required to swap axes, since dataloader gives output in (batch_size x seq_len x num_of_features)
+            X = X.permute(1,0,2)
+
+            loss, recon_loss, kl_loss, _ = self.compute_loss(X)
+            val_losses.append(loss.cpu().detach().numpy())
 
 
-    def fit(self, dataset, save = False):
+        print('Average loss: {:.4f}'.format(np.mean(val_losses)))
+        return np.mean(losses),np.mean(recon_losses), np.mean(kl_losses), np.mean(val_losses)
+
+
+    def fit(self, train_dataset,val_dataset, save = False):
         """
         Calls `_train` function over a fixed number of epochs, specified by `n_epochs`
         :param dataset: `Dataset` object
@@ -324,29 +342,36 @@ class VRAE(BaseEstimator, nn.Module):
         :return:
         """
 
-        train_loader = DataLoader(dataset = dataset,
+        train_loader = DataLoader(dataset = train_dataset,
                                   batch_size = self.batch_size,
                                   shuffle = True,
                                   drop_last=True)
-        losses, recon_losses, kl_losses = [],[],[]
+        val_loader = DataLoader(dataset = val_dataset,
+                                    batch_size = self.batch_size,
+                                    shuffle = False,
+                                    drop_last=True)
+        losses, recon_losses, kl_losses, val_losses = [],[],[], []
         for i in range(self.n_epochs):
             print('Epoch: %s' % i)
 
-            loss, recon, kl = self._train(train_loader)
+            loss, recon, kl, val_loss = self._train(train_loader,val_loader)
             losses.append(loss)
             recon_losses.append(recon)
             kl_losses.append(kl)
+            val_losses.append(val_loss)
             wandb.log({
             "train_loss":loss,
             "train_recon": recon,
-            "train_kl": kl
+            "train_kl": kl,
+            "val_loss":val_loss
             })
 
         self.is_fitted = True
         if self.plot_loss:
             with torch.no_grad():
                 fig, axs = plt.subplots(3,figsize=(15,15))
-                axs[0].plot(losses, label = 'Elbo loss')
+                axs[0].plot(losses, label = 'Elbo loss for train')
+                axs[0].plot(val_losses, label = 'Elbo loss for val')
                 axs[1].plot(recon_losses, label = 'Reconstruction loss')
                 axs[2].plot(kl_losses, label = 'Kl divergence')
 
@@ -374,7 +399,7 @@ class VRAE(BaseEstimator, nn.Module):
                     )
         ).cpu().data.numpy()
 
-    def _batch_reconstruct(self, x):
+    def _batch_reconstruct(self, x, tensor=False):
         """
         Passes the given input tensor into encoder, lambda and decoder function
         :param x: input batch tensor
@@ -383,7 +408,8 @@ class VRAE(BaseEstimator, nn.Module):
 
         x = Variable(x.type(self.dtype), requires_grad = False)
         x_decoded, _ = self(x)
-
+        if tensor:
+            return x_decoded
         return x_decoded.cpu().data.numpy()
 
     def reconstruct(self, dataset, save = False):
@@ -425,7 +451,61 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
+    def detect_outlier(self, dataset, amount_of_samplings=15, threshhold = 1500):
+        """
+        Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
+        Prerequisite is that model has to be fit
+        :param dataset: input dataset who's output vectors are to be obtained
+        :param bool save: If true, dumps the output vector dataframe as a pickle file
+        :return:
+        """
 
+        self.eval()
+
+        test_loader = DataLoader(dataset = dataset,
+                                 batch_size = self.batch_size,
+                                 shuffle = False,
+                                 drop_last=True) # Don't shuffle for test_loader
+
+        if not self.is_fitted:
+            raise RuntimeError('Model needs to be fit')
+
+        with torch.no_grad():
+            tmp = np.zeros(len(dataset))
+            for i, x in enumerate(test_loader):
+                print('next batch', i)
+                x = x[0]
+                x = x.permute(1, 0, 2)
+                _x = Variable(x.type(self.dtype), requires_grad = False)
+                # Run the batch through the encoder and decoder. 
+                # latent_mean and latent_logvar comes from latent space from encoder, after being run through the 
+                # Lambda class. 
+                x_recon, latent = self(_x)
+                
+                for l in range(amount_of_samplings):
+                    # Draw batch_size*L samples from z ~ N(mu_z, sigma_z)
+                    std = torch.exp(0.5 * self.lmbd.latent_logvar)
+                    latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
+                    x_recon_batch = self.decoder(latent_space_samples)
+                    for j in range(self.batch_size):
+                        x_single = x[:,j,:]
+                        x_recon_single = x_recon_batch[:,j,:]
+                        # Measure loss between reconstruction and sample and call this "reconstruction probability"
+                        tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
+                        # print(i*self.batch_size+j)
+            
+            tmp /= amount_of_samplings
+            # Marks the sample as an outlier if reconstruction probability > \alpha
+            #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
+            indices_outlier = np.where(dataset.labels == -1)[0]
+            indices = np.where(dataset.labels == 1)[0]
+            asd = np.array(range(len(dataset)))
+            plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='-1')
+            plt.scatter(asd[indices], tmp[indices], label='1')
+            plt.legend()
+            plt.show()
+            anomalies = [-1 if x > threshhold else 1 for x in tmp]
+        return anomalies
     def transform(self, dataset, save = False):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_transform`
@@ -492,4 +572,7 @@ class VRAE(BaseEstimator, nn.Module):
         :return: None
         """
         self.is_fitted = True
-        self.load_state_dict(torch.load(PATH))
+        if self.use_cuda:
+            self.load_state_dict(torch.load(PATH))
+        else:
+            self.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
