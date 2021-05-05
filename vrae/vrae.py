@@ -8,7 +8,7 @@ from torch.autograd import Variable
 import os
 import matplotlib.pyplot as plt
 import wandb
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, auc
 
 
 class Encoder(nn.Module):
@@ -289,6 +289,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         t = 0
         losses, recon_losses, kl_losses = [],[],[]
+        #total_norm= []
         for t, X in enumerate(train_loader):
 
             # Index first element of array to return tensor
@@ -303,8 +304,14 @@ class VRAE(BaseEstimator, nn.Module):
             losses.append(loss.cpu().detach().numpy())
             recon_losses.append(recon_loss.cpu().detach().numpy())
             kl_losses.append(kl_loss.cpu().detach().numpy())
+        
             if self.clip:
                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm = self.max_grad_norm)
+            '''
+            for p in self.parameters():
+                param_norm = p.grad.data.norm(2)
+                total_norm.append(param_norm.item())
+            '''
 
 
             self.optimizer.step()
@@ -313,6 +320,7 @@ class VRAE(BaseEstimator, nn.Module):
                 print('Batch %d, loss = %.4f, recon_loss = %.4f, kl_loss = %.4f' % (t + 1, np.mean(losses),
                                                                                     np.mean(recon_losses), np.mean(kl_losses)))
 
+        #print("Average grad norm: ",np.mean(total_norm))
         print('Average loss: {:.4f}'.format(np.mean(losses)))
         self.eval()
 
@@ -359,11 +367,16 @@ class VRAE(BaseEstimator, nn.Module):
             recon_losses.append(recon)
             kl_losses.append(kl)
             val_losses.append(val_loss)
+            y_pred, _ = self.detect_outlier(val_dataset)
+            y_true = val_dataset.labels
+            fpr, tpr, thresholds = roc_curve(y_true,y_pred)
+            auc_ = auc(fpr,tpr)
             wandb.log({
             "train_loss":loss,
             "train_recon": recon,
             "train_kl": kl,
-            "val_loss":val_loss
+            "val_loss":val_loss,
+            "auc":auc_
             })
 
         self.is_fitted = True
@@ -451,7 +464,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
-    def detect_outlier(self, dataset, amount_of_samplings=15, threshhold = 1500):
+    def detect_outlier(self, dataset, amount_of_samplings=1, threshhold = 1500):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
         Prerequisite is that model has to be fit
@@ -467,16 +480,16 @@ class VRAE(BaseEstimator, nn.Module):
                                  shuffle = False,
                                  drop_last=True) # Don't shuffle for test_loader
 
-        if not self.is_fitted:
-            raise RuntimeError('Model needs to be fit')
+        #if not self.is_fitted:
+        #    raise RuntimeError('Model needs to be fit')
 
         with torch.no_grad():
             tmp = np.zeros(len(dataset))
             for i, x in enumerate(test_loader):
-                print('next batch', i)
+                #print('next batch', i)
                 x = x[0]
-                x = x.permute(1, 0, 2)
-                _x = Variable(x.type(self.dtype), requires_grad = False)
+                x = x.permute(1, 0, 2).type(self.dtype)
+                _x = Variable(x, requires_grad = False)
                 # Run the batch through the encoder and decoder. 
                 # latent_mean and latent_logvar comes from latent space from encoder, after being run through the 
                 # Lambda class. 
@@ -497,15 +510,17 @@ class VRAE(BaseEstimator, nn.Module):
             tmp /= amount_of_samplings
             # Marks the sample as an outlier if reconstruction probability > \alpha
             #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
-            indices_outlier = np.where(dataset.labels == -1)[0]
-            indices = np.where(dataset.labels == 1)[0]
+            indices_outlier = np.where(dataset.labels == 1)[0]
+            indices = np.where(dataset.labels == 0)[0]
             asd = np.array(range(len(dataset)))
-            plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='-1')
-            plt.scatter(asd[indices], tmp[indices], label='1')
+            plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='1')
+            plt.scatter(asd[indices], tmp[indices], label='0')
             plt.legend()
+            plt.savefig('anomalies.png')
             plt.show()
-            anomalies = [-1 if x > threshhold else 1 for x in tmp]
-        return anomalies
+            plt.close()
+            anomalies = [1 if x > threshhold else 0 for x in tmp]
+        return tmp, anomalies
     def transform(self, dataset, save = False):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_transform`

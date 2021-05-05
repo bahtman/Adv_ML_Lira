@@ -12,11 +12,10 @@ from torch.utils.data import DataLoader, random_split
 
 columns= ['acc.xyz.z']
 seq_len = 369
-train = TS_dataset(datafile = "./Data/resampled_df.pickle",timesteps=seq_len,columns=columns,type='train')
-val = TS_dataset(datafile = "./Data/resampled_df.pickle",timesteps=seq_len,columns=columns,type='val')
-test = TS_dataset(datafile = "./Data/resampled_df.pickle",timesteps=seq_len,columns=columns,type='test')
+train = TS_dataset(timesteps=seq_len,columns=columns,type='train')
+val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
+test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
-
 
 #val_percent = 0.1
 #n_val = int(len(dataset) * val_percent)
@@ -25,13 +24,13 @@ n_features= len(columns)
 
 hyperparameter_defaults = dict(
         hidden_size = 90, 
-        hidden_layer_depth = 5,
-        latent_length = 20,
+        hidden_layer_depth = 2,
+        latent_length = 40,
         batch_size = 32,
         learning_rate = 0.0005,
-        n_epochs = 60,
+        n_epochs = 20,
         dropout_rate = 0.2,
-        max_grad_norm=5
+        max_grad_norm=30
         )
 config = DotMap(hyperparameter_defaults)
 

@@ -14,7 +14,7 @@ class TS_dataset(Dataset):
         self.timesteps = timesteps
         if datafile:
             data = pickle.load(open(datafile, 'rb'))
-            data['labels'] = data['IRI_mean'].apply(lambda x: 1 if x <= 2 else -1)
+            data['labels'] = data['IRI_mean'].apply(lambda x: 0 if x <= 2 else 1)
             #data = data[data.labels==1]
             self.columns = columns
             self.data = data
@@ -23,11 +23,11 @@ class TS_dataset(Dataset):
             data = pickle.load(open("./Data/synth_data.pickle", 'rb'))
             self.all_data = data['data']
             self.labels = data['labels']
-        anomaly_y = self.all_data[self.labels==-1]
-        anomaly_n = self.all_data[self.labels==1]
-        label_y = self.labels[self.labels==-1]
-        label_n = self.labels[self.labels==1]
-        indices = sample(range(anomaly_n.shape[0]),int(anomaly_n.shape[0]*0.8))
+        anomaly_y = self.all_data[self.labels==1]
+        anomaly_n = self.all_data[self.labels==0]
+        label_y = self.labels[self.labels==1]
+        label_n = self.labels[self.labels==0]
+        indices = sample(range(anomaly_n.shape[0]),int(anomaly_n.shape[0]*0.6))
         train_data, train_label = anomaly_n[indices,:,:], label_n[indices]
         rest_data, rest_label = np.delete(anomaly_n,indices,axis=0), np.delete(label_n,indices)
         rest_data = np.concatenate((rest_data,anomaly_y))

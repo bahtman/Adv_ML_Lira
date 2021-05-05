@@ -23,7 +23,7 @@ parameters:
   learning_rate:
     min: 0.0001
     max: 0.1
-  epochs:
+  n_epochs:
     value: 50
 command:
 - bash
