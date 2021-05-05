@@ -62,5 +62,4 @@ class TS_dataset(Dataset):
             idx = idx.tolist()
         data = self.all_data[idx, :, :]
         label = self.labels[idx]
-
         return data, label
