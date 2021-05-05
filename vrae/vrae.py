@@ -289,7 +289,7 @@ class VRAE(BaseEstimator, nn.Module):
             #log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.unsqueeze(1)), 1))  # MB x 1
 
         #else:
-            r#aise Exception('Wrong name of the prior!')
+            #raise Exception('Wrong name of the prior!')
 
         #return log_prior
     def compute_loss(self, X):
