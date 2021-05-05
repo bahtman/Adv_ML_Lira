@@ -25,7 +25,7 @@ n_features= len(columns)
 
 hyperparameter_defaults = dict(
         hidden_size = 90, 
-        hidden_layer_depth = 2,
+        hidden_layer_depth = 5,
         latent_length = 20,
         batch_size = 32,
         learning_rate = 0.0005,
