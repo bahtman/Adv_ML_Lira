@@ -20,7 +20,7 @@ PARSER.add_argument('--seed', type=int, default=1, help='Random seed.')
 PARSER.add_argument('--model', type=int, default=1, help='Choose model for training if "1" the model will be a VAE, if "2" the model will be a normal LSTM.')
 
 # File paths
-PARSER.add_argument('--data_dir', default='./Data/resampled_df.pickle', help='Location of dataset.')
+PARSER.add_argument('--data_dir', default=None, help='Location of dataset.')
 PARSER.add_argument('--output_dir', default='./results/')
 PARSER.add_argument('--results_file', default='results.txt', help='Filename where to store settings and test results.')
 PARSER.add_argument('--dataset', default='generated', help='Which dataset to use. [generated|GM]')
@@ -66,12 +66,12 @@ if __name__ == '__main__':
     else: 
         torch.manual_seed(ARGS.seed)
     if ARGS.dataset == 'generated':
-        dataset = TS_dataset(timesteps=ARGS.time_steps)
+        train, val, test = TS_dataset(timesteps=ARGS.time_steps)
         n_features = 1
         seq_len = ARGS.time_steps
     elif ARGS.dataset == 'GM':
         columns= ['acc.xyz.z']
-        dataset = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns)
+        train, val, test = TS_dataset(ARGS.data_dir,ARGS.time_steps,columns=columns)
         n_features= len(columns)
         seq_len = ARGS.time_steps
     else:
@@ -84,15 +84,6 @@ if __name__ == '__main__':
         model = RecurrentAutoencoderLSTM(seq_len, n_features, ARGS.embedding_dim, ARGS.latent_dim).to(ARGS.device)
         print("A normal LSTM model type structure will be used for training")
  
-    val_percent = 0.1
-    n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - n_val
-    train, val = random_split(dataset, [n_train, n_val])
-    
-    # make datasets iterable
-    n_val = int(len(val)*0.5)
-    n_test = int(len(val)-n_val)
-    val, test = random_split(val, [n_val, n_test])
 
     train_loader = DataLoader(train, batch_size=ARGS.batch_size, shuffle=True, num_workers=0, drop_last=True)
     val_loader = DataLoader(val, batch_size=ARGS.batch_size, shuffle=False, num_workers=0, drop_last=True)

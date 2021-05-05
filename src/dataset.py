@@ -2,8 +2,9 @@ from torch.utils.data import Dataset
 import torch
 import pandas as pd
 import numpy as np
-import pickle5 as pickle
+#import pickle5 as pickle
 from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, random_split
 
 
 class TS_dataset(Dataset):
@@ -127,5 +128,17 @@ class TS_dataset(Dataset):
             idx = idx.tolist()
         data = self.all_data[idx, :, :]
         label = self.labels[idx]
-
         return data, label
+    def __splitdata__(self):
+        print(self.all_data)
+        print(self.labels)
+        data = self.data
+        val_percent = 0.2
+        test_percent = 0.1
+        n_val = int(length(data)*val_percent)
+        n_test = int(length(data)*test_percent)
+        n_train = int(length(data)-(n_val+n_test))
+        train, val, test = random_split(data, [n_train, n_val, n_test], generator=torch.Generator().manual_seed(42))
+        train = train[train['label'] == 1]
+        print(train, val, test)
+        return train, val, test
