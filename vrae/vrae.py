@@ -258,7 +258,7 @@ class VRAE(BaseEstimator, nn.Module):
         :return: joint loss, reconstruction loss and kl-divergence loss
         """
         latent_mean, latent_logvar = self.lmbd.latent_mean, self.lmbd.latent_logvar
-
+        #kl_loss = -(log_p_z - log_q_z). log_q_z = log_Normal_diag(z_q,z_q_mean, z_q_logvar, dim=1)
         kl_loss = -0.5 * torch.mean(1 + latent_logvar - latent_mean.pow(2) - latent_logvar.exp())
         recon_loss = loss_fn(x_decoded, x)
 
