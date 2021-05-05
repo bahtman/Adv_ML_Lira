@@ -263,7 +263,35 @@ class VRAE(BaseEstimator, nn.Module):
         recon_loss = loss_fn(x_decoded, x)
 
         return kl_loss + recon_loss, recon_loss, kl_loss
+    #def log_p_z(self, z):
+        #if self.args.prior == 'standard':
+            #log_prior = log_Normal_standard(z, dim=1)
 
+        #elif self.args.prior == 'vampprior':
+            # z - MB x M
+            #C = self.args.number_components
+
+            # calculate params
+            #X = self.means(self.idle_input)
+
+            # calculate params for given data
+            #z_p_mean, z_p_logvar = self.q_z(X)  # C x M
+
+            # expand z
+            #z_expand = z.unsqueeze(1)
+            #means = z_p_mean.unsqueeze(0)
+            #logvars = z_p_logvar.unsqueeze(0)
+
+            #a = log_Normal_diag(z_expand, means, logvars, dim=2) - math.log(C)  # MB x C
+            #a_max, _ = torch.max(a, 1)  # MB x 1
+
+            # calculte log-sum-exp
+            #log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.unsqueeze(1)), 1))  # MB x 1
+
+        #else:
+            r#aise Exception('Wrong name of the prior!')
+
+        #return log_prior
     def compute_loss(self, X):
         """
         Given input tensor, forward propagate, compute the loss, and backward propagate.
