@@ -8,6 +8,7 @@ import torch.utils.data
 from torch.nn import Linear
 from torch.autograd import Variable
 from utils.distributions import log_Normal_diag, log_Normal_standard
+import math
 import os
 import matplotlib.pyplot as plt
 import wandb
@@ -96,7 +97,7 @@ class Decoder(nn.Module):
     :param block: GRU/LSTM - use the same which you've used in the encoder
     :param dtype: Depending on cuda enabled/disabled, create the tensor
     """
-    def __init__(self, sequence_length, batch_size, hidden_size, hidden_layer_depth, latent_length, output_size, dtype, block='LSTM', prior = "standard"):
+    def __init__(self, sequence_length, batch_size, hidden_size, hidden_layer_depth, latent_length, output_size, dtype, block='LSTM', prior = "vampprior"):
 
         super(Decoder, self).__init__()
 
@@ -171,7 +172,7 @@ class VRAE(BaseEstimator, nn.Module):
     def __init__(self, sequence_length, number_of_features, hidden_size=90, hidden_layer_depth=2, latent_length=20,
                  batch_size=32, learning_rate=0.005, block='LSTM',
                  n_epochs=5, dropout_rate=0., optimizer='Adam', loss='MSELoss',
-                 cuda=False, clip=True, max_grad_norm=5, dload='.',plot_loss=True, prior = 'standard'):
+                 cuda=False, clip=True, max_grad_norm=5, dload='.',plot_loss=True, prior = 'vampprior'):
 
         super(VRAE, self).__init__()
 
@@ -205,7 +206,7 @@ class VRAE(BaseEstimator, nn.Module):
                                output_size=number_of_features,
                                block=block,
                                dtype=self.dtype)
-
+        self.means = nn.Linear(sequence_length, hidden_size)
         self.sequence_length = sequence_length
         self.hidden_size = hidden_size
         self.hidden_layer_depth = hidden_layer_depth
@@ -249,7 +250,6 @@ class VRAE(BaseEstimator, nn.Module):
         """
         cell_output = self.encoder(x)
         latent = self.lmbd(cell_output)
-        print(latent)
         x_decoded = self.decoder(latent)
 
         return x_decoded, latent
@@ -284,13 +284,12 @@ class VRAE(BaseEstimator, nn.Module):
     def log_p_z(self, z):
         if self.prior == 'standard':
             log_prior = log_Normal_standard(z, dim=1)
-
         elif self.prior == 'vampprior':
             # z - MB x M
-            C = self.args.number_components
+            C = self.hidden_size
 
             # calculate params
-            X = self.means(self.idle_input)
+            #X = self.means(self.idle_input)
 
             # calculate params for given data
             latent_mean, latent_logvar = self.lmbd.latent_mean, self.lmbd.latent_logvar
