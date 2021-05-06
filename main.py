@@ -46,8 +46,9 @@ args = DotMap(dict(
     results_file = 'result.txt',
     output_dir = 'results',
     visualize=True,
-    train = False,
-    detectOutliers = True
+    train = True,
+    detectOutliers = False,
+    prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -69,7 +70,8 @@ vrae = VRAE(sequence_length=args.seq_len,
             max_grad_norm=config.max_grad_norm,
             loss = args.loss,
             block = args.block,
-            plot_loss = args.visualize)
+            plot_loss = args.visualize,
+            prior = args.prior)
 
 if args.train:
     print('Training VRAE model')

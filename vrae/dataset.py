@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import torch
 import pandas as pd
 import numpy as np
-import pickle as pickle
+import pickle
 from sklearn.preprocessing import StandardScaler
 from random import sample
 
@@ -36,6 +36,7 @@ class TS_dataset(Dataset):
 
         if type=='train':
             self.all_data = train_data
+            print(train_data)
             self.labels = train_label
         elif type=='val':
             self.all_data = val_data

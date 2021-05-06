@@ -4,7 +4,11 @@ from torch import nn, optim
 from torch import distributions
 from .base import BaseEstimator
 from torch.utils.data import DataLoader
+import torch.utils.data
+from torch.nn import Linear
 from torch.autograd import Variable
+from utils.distributions import log_Normal_diag, log_Normal_standard
+import math
 import os
 import matplotlib.pyplot as plt
 import wandb
@@ -81,7 +85,7 @@ class Lambda(nn.Module):
             eps = torch.randn_like(std)
             return eps.mul(std).add_(self.latent_mean)
         else:
-            return self.latent_mean
+            return self.latent_mean#, self.latent_logvar
 
 class Decoder(nn.Module):
     """Converts latent vector into output
@@ -94,7 +98,7 @@ class Decoder(nn.Module):
     :param block: GRU/LSTM - use the same which you've used in the encoder
     :param dtype: Depending on cuda enabled/disabled, create the tensor
     """
-    def __init__(self, sequence_length, batch_size, hidden_size, hidden_layer_depth, latent_length, output_size, dtype, block='LSTM'):
+    def __init__(self, sequence_length, batch_size, hidden_size, hidden_layer_depth, latent_length, output_size, dtype, block='LSTM', prior = "vampprior"):
 
         super(Decoder, self).__init__()
 
@@ -169,7 +173,7 @@ class VRAE(BaseEstimator, nn.Module):
     def __init__(self, sequence_length, number_of_features, hidden_size=90, hidden_layer_depth=2, latent_length=20,
                  batch_size=32, learning_rate=0.005, block='LSTM',
                  n_epochs=5, dropout_rate=0., optimizer='Adam', loss='MSELoss',
-                 cuda=False, clip=True, max_grad_norm=5, dload='.',plot_loss=True):
+                 cuda=False, clip=True, max_grad_norm=5, dload='.',plot_loss=True, prior = 'vampprior'):
 
         super(VRAE, self).__init__()
 
@@ -203,7 +207,7 @@ class VRAE(BaseEstimator, nn.Module):
                                output_size=number_of_features,
                                block=block,
                                dtype=self.dtype)
-
+        #self.means = nn.Linear(sequence_length, hidden_size)
         self.sequence_length = sequence_length
         self.hidden_size = hidden_size
         self.hidden_layer_depth = hidden_layer_depth
@@ -211,6 +215,7 @@ class VRAE(BaseEstimator, nn.Module):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.n_epochs = n_epochs
+        self.prior = prior
 
         self.clip = clip
         self.max_grad_norm = max_grad_norm
@@ -259,12 +264,61 @@ class VRAE(BaseEstimator, nn.Module):
         :return: joint loss, reconstruction loss and kl-divergence loss
         """
         latent_mean, latent_logvar = self.lmbd.latent_mean, self.lmbd.latent_logvar
-
-        kl_loss = -0.5 * torch.mean(1 + latent_logvar - latent_mean.pow(2) - latent_logvar.exp())
+        # KL
+        z_q = self.reparameterize(latent_mean, latent_logvar)
+        log_p_z = self.log_p_z(z_q)
+        log_q_z = log_Normal_diag(z_q, latent_mean, latent_logvar, dim=1)
+        kl_loss = -(log_p_z - log_q_z)
+        #log_q_z = log_Normal_diag(z_q,z_q_mean, z_q_logvar, dim=1)
+        #kl_loss = -0.5 * torch.mean(1 + latent_logvar - latent_mean.pow(2) - latent_logvar.exp())
         recon_loss = loss_fn(x_decoded, x)
 
         return kl_loss + recon_loss, recon_loss, kl_loss
+    # THE MODEL: VARIATIONAL POSTERIOR
+    def q_z(self, x):
+        x = self.q_z_layers(x)
 
+        z_q_mean = self.q_z_mean(x)
+        z_q_logvar = self.q_z_logvar(x)
+        return z_q_mean, z_q_logvar
+
+    def log_p_z(self, z):
+        if self.prior == 'standard':
+            log_prior = log_Normal_standard(z, dim=1)
+        elif self.prior == 'vampprior':
+            # z - MB x M
+            C = self.hidden_size
+
+            # calculate params
+            #X = self.means(self.idle_input)
+
+            # calculate params for given data
+            latent_mean, latent_logvar = self.lmbd.latent_mean, self.lmbd.latent_logvar
+
+            # expand z
+            z_expand = z.unsqueeze(1)
+            means = latent_mean.unsqueeze(0)
+            logvars = latent_logvar.unsqueeze(0)
+
+            a = log_Normal_diag(z_expand, means, logvars, dim=2) - math.log(C)  # MB x C
+            a_max, _ = torch.max(a, 1)  # MB x 1
+
+            # calculte log-sum-exp
+            log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.unsqueeze(1)), 1))  # MB x 1
+
+        else:
+            raise Exception('Wrong name of the prior!')
+
+        return log_prior
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        if self.use_cuda:
+            eps = torch.cuda.FloatTensor(std.size()).normal_()
+        else:
+            eps = torch.FloatTensor(std.size()).normal_()
+        eps = Variable(eps)
+        return eps.mul(std).add_(mu)
+    
     def compute_loss(self, X):
         """
         Given input tensor, forward propagate, compute the loss, and backward propagate.
@@ -276,7 +330,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         x_decoded, _ = self(x)
         loss, recon_loss, kl_loss = self._rec(x_decoded, x.detach(), self.loss_fn)
-
+        loss, recon_loss, kl_loss = loss.mean(), recon_loss.mean(), kl_loss.mean()
         return loss, recon_loss, kl_loss, x
 
 

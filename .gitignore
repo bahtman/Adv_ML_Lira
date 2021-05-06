@@ -139,6 +139,6 @@ dmypy.json
 
 results/
 wandb/
+.pickle
 Data/
-
 .png
