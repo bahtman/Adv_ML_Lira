@@ -47,6 +47,7 @@ args = DotMap(dict(
     results_file = 'result.txt',
     output_dir = 'results',
     visualize=False,
+    
     train = True,
     detectOutliers = False,
     prior='vampprior'
