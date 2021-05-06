@@ -25,7 +25,7 @@ n_features= len(columns)
 hyperparameter_defaults = dict(
         hidden_size = 90, 
         hidden_layer_depth = 2,
-        latent_length = 40,
+        latent_length = 20,
         batch_size = 32,
         learning_rate = 0.0005,
         n_epochs = 20,
@@ -50,7 +50,7 @@ args = DotMap(dict(
     seed = 42,
     results_file = 'result.txt',
     output_dir = 'results',
-    visualize=False,
+    visualize=True,
     train = True,
     detectOutliers = False
 ))
