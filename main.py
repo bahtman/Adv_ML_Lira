@@ -17,15 +17,10 @@ val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
 test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
-#val_percent = 0.1
-#n_val = int(len(dataset) * val_percent)
-#n_train = len(dataset) - n_val
-#train, val = random_split(dataset, [n_train, n_val])
-
 hyperparameter_defaults = dict(
         hidden_size = 90, 
         hidden_layer_depth = 2,
-        latent_length = 40,
+        latent_length = 20,
         batch_size = 32,
         learning_rate = 0.0005,
         n_epochs = 20,
@@ -38,7 +33,7 @@ config = DotMap(hyperparameter_defaults)
 wandb.init(config = hyperparameter_defaults,project="VRAE")
 config = wandb.config
 args = DotMap(dict(
-    seq_len=369,
+    seq_len=seq_len,
     n_features = n_features,
     batch_size = config.batch_size,
     n_epochs = config.n_epochs,
@@ -50,9 +45,10 @@ args = DotMap(dict(
     seed = 42,
     results_file = 'result.txt',
     output_dir = 'results',
-    visualize=False,
+    visualize=True,
     train = True,
-    detectOutliers = False
+    detectOutliers = False,
+    prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -74,21 +70,25 @@ vrae = VRAE(sequence_length=args.seq_len,
             max_grad_norm=config.max_grad_norm,
             loss = args.loss,
             block = args.block,
-            plot_loss = args.visualize)
+            plot_loss = args.visualize,
+            prior = args.prior)
 
 if args.train:
     print('Training VRAE model')
     vrae.fit(train,val, save=True)
+elif args.prior == 'standard':
+    vrae.load('vrae/models/model_gaus.pth')
+elif args.prior == 'vampprior':
+    vrae.load('vrae/models/model_vamp.pth')
 
 if args.detectOutliers: 
     print("Detecting outliers")
-    vrae.load('vrae/models/model.pth')
     from vrae.detect import detect
     detect(vrae, test, args.device)
 
 if args.visualize:
     print("Visualizing validation set with VRAE")
-    x_decoded = vrae.reconstruct(val)
+    x_decoded = vrae.reconstruct(test)
 
     with torch.no_grad():  
         n_plots = 5

@@ -1,8 +1,11 @@
 program: main.py
 method: bayes
 metric:
-  goal: minimize
-  name: train_loss
+  goal: maximize
+  name: auc
+early_terminate:
+  type: hyperband
+  min_iter: 5
 parameters:
   hidden_size:
     min: 5
@@ -14,8 +17,8 @@ parameters:
     min: 4
     max: 80
   max_grad_norm:
-    min: 1
-    max: 10
+    min: 20
+    max: 50
   dropout_rate:
     min: 0.01
     max: 0.9
