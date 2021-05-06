@@ -18,14 +18,14 @@ test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
 hyperparameter_defaults = dict(
-        hidden_size = 90, 
+        hidden_size = 115, 
         hidden_layer_depth = 2,
-        latent_length = 20,
+        latent_length = 75,
         batch_size = 32,
-        learning_rate = 0.0005,
-        n_epochs = 20,
-        dropout_rate = 0.2,
-        max_grad_norm=30
+        learning_rate = 0.0001649,
+        n_epochs = 15,
+        dropout_rate = 0.7426,
+        max_grad_norm=31
         )
 config = DotMap(hyperparameter_defaults)
 
@@ -47,7 +47,7 @@ args = DotMap(dict(
     output_dir = 'results',
     visualize=True,
     train = False,
-    detectOutliers = False,
+    detectOutliers = True,
     prior='standard'
 ))
 args.device = True if torch.cuda.is_available() else False
@@ -77,7 +77,7 @@ if args.train:
     print('Training VRAE model')
     vrae.fit(train,val, save=True)
 elif args.prior == 'standard':
-    vrae.load('vrae/models/model_gaus.pth')
+    vrae.load('vrae/models/model.pth')
 elif args.prior == 'vampprior':
     vrae.load('vrae/models/model_vamp.pth')
 

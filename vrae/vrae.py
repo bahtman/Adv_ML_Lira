@@ -530,8 +530,8 @@ class VRAE(BaseEstimator, nn.Module):
         :param bool save: If true, dumps the output vector dataframe as a pickle file
         :return:
         """
-        if len(dataset) % self.batch_size > 0:
-            raise Exception("Outlier plot will show a loss of 0 for some samples, as drop_last=True")
+        #if len(dataset) % self.batch_size > 0:
+        #    raise Exception("Outlier plot will show a loss of 0 for some samples, as drop_last=True")
         self.eval()
 
         test_loader = DataLoader(dataset = dataset,
