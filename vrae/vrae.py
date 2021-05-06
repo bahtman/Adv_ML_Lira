@@ -9,6 +9,7 @@ import os
 import matplotlib.pyplot as plt
 import wandb
 from sklearn.metrics import roc_curve, auc
+from torch.distributions import Normal
 
 
 class Encoder(nn.Module):
@@ -464,7 +465,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
-    def detect_outlier(self, dataset, amount_of_samplings=1, threshhold = 1500):
+    def detect_outlier(self, dataset, amount_of_samplings=1, threshhold = 0.2):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
         Prerequisite is that model has to be fit
@@ -499,12 +500,18 @@ class VRAE(BaseEstimator, nn.Module):
                     # Draw batch_size*L samples from z ~ N(mu_z, sigma_z)
                     std = torch.exp(0.5 * self.lmbd.latent_logvar)
                     latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
+                    recon_dist = Normal(self.lmbd.latent_mean, std)
                     x_recon_batch = self.decoder(latent_space_samples)
+                    prob = recon_dist.log_prob(x_recon_batch).exp().mean(dim=0).mean(dim=1)
+                    #print(torch.min(prob))
+                    #print(torch.max(prob))
                     for j in range(self.batch_size):
-                        x_single = x[:,j,:]
-                        x_recon_single = x_recon_batch[:,j,:]
+                        #x_single = x[:,j,:]
+
+                        #x_recon_single = x_recon_batch[:,j,:]
                         # Measure loss between reconstruction and sample and call this "reconstruction probability"
-                        tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
+                        #tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
+                        tmp[i*self.batch_size+j] += prob[j]
                         # print(i*self.batch_size+j)
             
             tmp /= amount_of_samplings
