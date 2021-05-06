@@ -92,11 +92,12 @@ if args.visualize:
 
     with torch.no_grad():  
         n_plots = 5
-        x,label = val[0:n_plots]
+        x,label = val[0:n_plots+10]
         fig, axs = plt.subplots(n_plots, figsize = (15,15))
         for i in range(n_plots):
             axs[i].plot(x[i,:,0], label = 'Input data')
             axs[i].plot(x_decoded[:,i,0], label = 'Reconstructed data')
+            axs[i].title.set_text(f'Label is {label[i]}')
 
 
         for ax in axs.flat:
