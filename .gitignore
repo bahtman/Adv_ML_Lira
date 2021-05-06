@@ -142,3 +142,4 @@ wandb/
 .pickle
 Data/
 .png
+Data/synth_data.pickle

@@ -44,9 +44,9 @@ args = DotMap(dict(
     seed = 42,
     results_file = 'result.txt',
     output_dir = 'results',
-    visualize=True,
+    visualize=False,
     train = False,
-    detectOutliers = False,
+    detectOutliers = True,
     prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
