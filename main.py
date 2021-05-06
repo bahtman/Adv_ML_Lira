@@ -16,7 +16,6 @@ train = TS_dataset(timesteps=seq_len,columns=columns,type='train')
 val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
 test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
-
 hyperparameter_defaults = dict(
         hidden_size = 115, 
         hidden_layer_depth = 2,
@@ -46,7 +45,7 @@ args = DotMap(dict(
     results_file = 'result.txt',
     output_dir = 'results',
     visualize=True,
-    train = True,
+    train = False,
     detectOutliers = False,
     prior='vampprior'
 ))
@@ -91,8 +90,8 @@ if args.visualize:
     x_decoded = vrae.reconstruct(test)
 
     with torch.no_grad():  
-        n_plots = 5
-        x,label = val[0:n_plots+10]
+        n_plots = 4
+        x,label = val[0:n_plots]
         fig, axs = plt.subplots(n_plots, figsize = (15,15))
         for i in range(n_plots):
             axs[i].plot(x[i,:,0], label = 'Input data')
@@ -101,6 +100,6 @@ if args.visualize:
 
 
         for ax in axs.flat:
-            ax.set(xlabel='time', ylabel='y-value :)')
+            ax.set(xlabel='', ylabel='')
         wandb.log({f"Reconstructions":fig})
         fig.savefig('generated_samples.png')

@@ -34,6 +34,8 @@ class TS_dataset(Dataset):
         indices = sample(range(rest_data.shape[0]),int(rest_data.shape[0]*0.5))
         val_data, val_label = rest_data[indices,:,:], rest_label[indices]
         test_data, test_label = np.delete(rest_data,indices,axis=0), np.delete(rest_label,indices)
+        idx = numpy.random.permutation(len(test_label))
+        test_data, test_label = test_data[idx,:,:], test_label[idx]
 
         if type=='train':
             self.all_data = train_data
