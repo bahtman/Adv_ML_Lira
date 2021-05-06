@@ -13,7 +13,6 @@ import os
 import matplotlib.pyplot as plt
 import wandb
 from sklearn.metrics import roc_curve, auc
-from torch.distributions import Normal
 from tqdm import tqdm
 
 
@@ -523,7 +522,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         raise RuntimeError('Model needs to be fit')
 
-    def detect_outlier(self, dataset, amount_of_samplings=1, threshhold = 0.2):
+    def detect_outlier(self, dataset, amount_of_samplings=1, threshhold = 1500, plot=False):
         """
         Given input dataset, creates dataloader, runs dataloader on `_batch_reconstruct`
         Prerequisite is that model has to be fit
@@ -531,19 +530,19 @@ class VRAE(BaseEstimator, nn.Module):
         :param bool save: If true, dumps the output vector dataframe as a pickle file
         :return:
         """
-        #if len(dataset) % self.batch_size > 0:
-        #    raise Exception("Outlier plot will show a loss of 0 for some samples, as drop_last=True")
+        if len(dataset) % self.batch_size > 0:
+            print("Warning: Outlier plot will show a loss of 0 for some samples, as drop_last=True")
         self.eval()
 
         test_loader = DataLoader(dataset = dataset,
                                  batch_size = self.batch_size,
-                                 shuffle = True,
+                                 shuffle = False,
                                  drop_last=True) # Don't shuffle for test_loader
 
         with torch.no_grad():
             tmp = np.zeros(len(dataset))
             labels = np.array([])
-            for i, x in enumerate(test_loader):
+            for i, x in enumerate(tqdm(test_loader)):
                 labels = np.concatenate((labels, x[1].detach().cpu().numpy()))
                 x = x[0]
                 x = x.permute(1, 0, 2).type(self.dtype)
@@ -557,27 +556,27 @@ class VRAE(BaseEstimator, nn.Module):
                     # Draw batch_size*L samples from z ~ N(mu_z, sigma_z)
                     std = torch.exp(0.5 * self.lmbd.latent_logvar)
                     latent_space_samples = torch.normal(self.lmbd.latent_mean, std)
-                    decoder_output = self.decoder(latent_space_samples)
-                    print(decoder_output.shape)
-                    recon_dist = Normal(self.lmbd.latent_mean, std)
-                    prob = recon_dist.log_prob(_x).exp().mean(dim=0).mean(dim=1)
+                    x_recon_batch = self.decoder(latent_space_samples)
                     for j in range(self.batch_size):
-                        tmp[i*self.batch_size+j] += prob[j]
-            
+                        x_single = x[:,j,:]
+                        x_recon_single = x_recon_batch[:,j,:]
+                        # Measure loss between reconstruction and sample and call this "reconstruction probability"
+                        tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
             tmp /= amount_of_samplings
             # Marks the sample as an outlier if reconstruction probability > \alpha
             indices_outlier = np.where(labels == 1)[0]
             indices = np.where(labels == 0)[0]
             asd = np.array(range(len(dataset)))
-            plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='1')
-            plt.scatter(asd[indices], tmp[indices], label='0')
-            plt.legend()
-            plt.ylabel('Reconstruction Loss')
-            plt.xlabel('Sample no.')
-            plt.savefig('anomalies_model_gaus.png')
-            plt.legend()
-            plt.show()
-            plt.close()
+            if plot:
+                plt.scatter(asd[indices_outlier], tmp[indices_outlier], label='1')
+                plt.scatter(asd[indices], tmp[indices], label='0')
+                plt.legend()
+                plt.ylabel('Reconstruction Loss')
+                plt.xlabel('Sample no.')
+                plt.savefig('anomalies_model_gaus.png')
+                plt.legend()
+                plt.show()
+                plt.close()
             anomalies = [1 if x > threshhold else 0 for x in tmp]
         return tmp, anomalies
     def transform(self, dataset, save = False):
