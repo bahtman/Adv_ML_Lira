@@ -46,9 +46,9 @@ args = DotMap(dict(
     results_file = 'result.txt',
     output_dir = 'results',
     visualize=True,
-    train = False,
-    detectOutliers = True,
-    prior='standard'
+    train = True,
+    detectOutliers = False,
+    prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -77,7 +77,7 @@ if args.train:
     print('Training VRAE model')
     vrae.fit(train,val, save=True)
 elif args.prior == 'standard':
-    vrae.load('vrae/models/model.pth')
+    vrae.load('vrae/models/model_gaus.pth')
 elif args.prior == 'vampprior':
     vrae.load('vrae/models/model_vamp.pth')
 

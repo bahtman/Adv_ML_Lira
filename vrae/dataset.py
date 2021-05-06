@@ -19,6 +19,7 @@ class TS_dataset(Dataset):
         else:
             data = pickle.load(open("./Data/synth_data.pickle", 'rb'))
             self.all_data = data['data']
+            self.all_data = np.expand_dims(self.all_data,2)
             self.labels = data['labels']
         anomaly_y = self.all_data[self.labels==1]
         anomaly_n = self.all_data[self.labels==0]
