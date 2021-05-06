@@ -17,10 +17,6 @@ val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
 test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
-#val_percent = 0.1
-#n_val = int(len(dataset) * val_percent)
-#n_train = len(dataset) - n_val
-#train, val = random_split(dataset, [n_train, n_val])
 
 hyperparameter_defaults = dict(
         hidden_size = 90, 
@@ -38,7 +34,7 @@ config = DotMap(hyperparameter_defaults)
 wandb.init(config = hyperparameter_defaults,project="VRAE")
 config = wandb.config
 args = DotMap(dict(
-    seq_len=369,
+    seq_len=seq_len,
     n_features = n_features,
     batch_size = config.batch_size,
     n_epochs = config.n_epochs,
@@ -50,7 +46,7 @@ args = DotMap(dict(
     seed = 42,
     results_file = 'result.txt',
     output_dir = 'results',
-    visualize=False,
+    visualize=True,
     train = True,
     detectOutliers = False,
     prior='vampprior'

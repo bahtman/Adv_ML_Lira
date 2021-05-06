@@ -13,6 +13,7 @@ import os
 import matplotlib.pyplot as plt
 import wandb
 from sklearn.metrics import roc_curve, auc
+from tqdm import tqdm
 
 
 class Encoder(nn.Module):
@@ -333,7 +334,7 @@ class VRAE(BaseEstimator, nn.Module):
         return loss, recon_loss, kl_loss, x
 
 
-    def _train(self, train_loader, val_loader):
+    def _train(self, train_loader, val_loader,epoch):
         """
         For each epoch, given the batch_size, run this function batch_size * num_of_batches number of times
         :param train_loader:input train loader with shuffle
@@ -344,35 +345,38 @@ class VRAE(BaseEstimator, nn.Module):
         t = 0
         losses, recon_losses, kl_losses = [],[],[]
         #total_norm= []
-        for t, X in enumerate(train_loader):
+        with tqdm(total=len(train_loader), desc='epoch {} of {}'.format(epoch+1, self.n_epochs)) as pbar:
+            for t, X in enumerate(train_loader):
 
-            # Index first element of array to return tensor
-            X = X[0]
+                # Index first element of array to return tensor
+                X = X[0]
 
-            # required to swap axes, since dataloader gives output in (batch_size x seq_len x num_of_features)
-            X = X.permute(1,0,2)
+                # required to swap axes, since dataloader gives output in (batch_size x seq_len x num_of_features)
+                X = X.permute(1,0,2)
 
-            self.optimizer.zero_grad()
-            loss, recon_loss, kl_loss, _ = self.compute_loss(X)
-            loss.backward()
-            losses.append(loss.cpu().detach().numpy())
-            recon_losses.append(recon_loss.cpu().detach().numpy())
-            kl_losses.append(kl_loss.cpu().detach().numpy())
-        
-            if self.clip:
-                torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm = self.max_grad_norm)
-            '''
-            for p in self.parameters():
-                param_norm = p.grad.data.norm(2)
-                total_norm.append(param_norm.item())
-            '''
+                self.optimizer.zero_grad()
+                loss, recon_loss, kl_loss, _ = self.compute_loss(X)
+                loss.backward()
+                losses.append(loss.cpu().detach().numpy())
+                recon_losses.append(recon_loss.cpu().detach().numpy())
+                kl_losses.append(kl_loss.cpu().detach().numpy())
+            
+                if self.clip:
+                    torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm = self.max_grad_norm)
+                '''
+                for p in self.parameters():
+                    param_norm = p.grad.data.norm(2)
+                    total_norm.append(param_norm.item())
+                '''
 
 
-            self.optimizer.step()
+                self.optimizer.step()
 
-            if (t + 1) % 20 == 0:
-                print('Batch %d, loss = %.4f, recon_loss = %.4f, kl_loss = %.4f' % (t + 1, np.mean(losses),
-                                                                                    np.mean(recon_losses), np.mean(kl_losses)))
+                #if (t + 1) % 20 == 0:
+                #    print('Batch %d, loss = %.4f, recon_loss = %.4f, kl_loss = %.4f' % (t + 1, np.mean(losses),
+                #                                                                        np.mean(recon_losses), np.mean(kl_losses)))
+                pbar.set_postfix(loss='{:.3f}'.format(np.mean(losses)))
+                pbar.update()
 
         #print("Average grad norm: ",np.mean(total_norm))
         print('Average loss: {:.4f}'.format(np.mean(losses)))
@@ -416,7 +420,7 @@ class VRAE(BaseEstimator, nn.Module):
         for i in range(self.n_epochs):
             print('Epoch: %s' % i)
 
-            loss, recon, kl, val_loss = self._train(train_loader,val_loader)
+            loss, recon, kl, val_loss = self._train(train_loader,val_loader,i)
             losses.append(loss)
             recon_losses.append(recon)
             kl_losses.append(kl)
@@ -534,13 +538,9 @@ class VRAE(BaseEstimator, nn.Module):
                                  shuffle = False,
                                  drop_last=True) # Don't shuffle for test_loader
 
-        #if not self.is_fitted:
-        #    raise RuntimeError('Model needs to be fit')
-
         with torch.no_grad():
             tmp = np.zeros(len(dataset))
             for i, x in enumerate(test_loader):
-                #print('next batch', i)
                 x = x[0]
                 x = x.permute(1, 0, 2).type(self.dtype)
                 _x = Variable(x, requires_grad = False)
@@ -559,11 +559,9 @@ class VRAE(BaseEstimator, nn.Module):
                         x_recon_single = x_recon_batch[:,j,:]
                         # Measure loss between reconstruction and sample and call this "reconstruction probability"
                         tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
-                        # print(i*self.batch_size+j)
             
             tmp /= amount_of_samplings
             # Marks the sample as an outlier if reconstruction probability > \alpha
-            #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
             indices_outlier = np.where(dataset.labels == 1)[0]
             indices = np.where(dataset.labels == 0)[0]
             asd = np.array(range(len(dataset)))
