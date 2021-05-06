@@ -18,14 +18,14 @@ test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
 hyperparameter_defaults = dict(
-        hidden_size = 90, 
+        hidden_size = 115, 
         hidden_layer_depth = 2,
-        latent_length = 20,
+        latent_length = 75,
         batch_size = 32,
-        learning_rate = 0.0005,
-        n_epochs = 20,
-        dropout_rate = 0.2,
-        max_grad_norm=30
+        learning_rate = 0.0001649,
+        n_epochs = 15,
+        dropout_rate = 0.7426,
+        max_grad_norm=31
         )
 config = DotMap(hyperparameter_defaults)
 
@@ -45,10 +45,10 @@ args = DotMap(dict(
     seed = 42,
     results_file = 'result.txt',
     output_dir = 'results',
-    visualize=False,
-    train = False,
-    detectOutliers = True,
-    prior='standard'
+    visualize=True,
+    train = True,
+    detectOutliers = False,
+    prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
