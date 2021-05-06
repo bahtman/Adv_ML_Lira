@@ -83,7 +83,7 @@ elif args.prior == 'vampprior':
 if args.detectOutliers: 
     print("Detecting outliers")
     from vrae.detect import detect
-    detect(vrae, test, args.device)
+    detect(vrae, test, val, device=args.device)
 
 if args.visualize:
     print("Visualizing validation set with VRAE")
