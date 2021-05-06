@@ -17,10 +17,6 @@ val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
 test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
-#val_percent = 0.1
-#n_val = int(len(dataset) * val_percent)
-#n_train = len(dataset) - n_val
-#train, val = random_split(dataset, [n_train, n_val])
 
 hyperparameter_defaults = dict(
         hidden_size = 90, 
