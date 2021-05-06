@@ -484,13 +484,9 @@ class VRAE(BaseEstimator, nn.Module):
                                  shuffle = False,
                                  drop_last=True) # Don't shuffle for test_loader
 
-        #if not self.is_fitted:
-        #    raise RuntimeError('Model needs to be fit')
-
         with torch.no_grad():
             tmp = np.zeros(len(dataset))
             for i, x in enumerate(test_loader):
-                #print('next batch', i)
                 x = x[0]
                 x = x.permute(1, 0, 2).type(self.dtype)
                 _x = Variable(x, requires_grad = False)
@@ -509,11 +505,9 @@ class VRAE(BaseEstimator, nn.Module):
                         x_recon_single = x_recon_batch[:,j,:]
                         # Measure loss between reconstruction and sample and call this "reconstruction probability"
                         tmp[i*self.batch_size+j] += self.loss_fn(x_recon_single, x_single)
-                        # print(i*self.batch_size+j)
             
             tmp /= amount_of_samplings
             # Marks the sample as an outlier if reconstruction probability > \alpha
-            #print(f"Sample no. {i}. Recon loss: {loss_l}. Outlier: { anomalies[i]==-1 }")
             indices_outlier = np.where(dataset.labels == 1)[0]
             indices = np.where(dataset.labels == 0)[0]
             asd = np.array(range(len(dataset)))
