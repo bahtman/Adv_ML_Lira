@@ -26,4 +26,4 @@
 #BSUB -eo job_out/gpu_%J.err
 # -- end of LSF options --
 
- bash python3 -m wandb agent bahtman/timeseries-clustering-vae/jn9fepzm
+ bash python3 -m wandb agent bahtman/timeseries-clustering-vae/1b0vsvr8

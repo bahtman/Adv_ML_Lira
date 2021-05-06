@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import torch
 import pandas as pd
 import numpy as np
-import pickle5 as pickle
+import pickle as pickle
 from sklearn.preprocessing import StandardScaler
 from random import sample
 
@@ -14,11 +14,8 @@ class TS_dataset(Dataset):
         self.timesteps = timesteps
         if datafile:
             data = pickle.load(open(datafile, 'rb'))
-            data['labels'] = data['IRI_mean'].apply(lambda x: 0 if x <= 2 else 1)
-            #data = data[data.labels==1]
-            self.columns = columns
-            self.data = data
-            self.process_gm_re()
+            self.all_data = data['data']
+            self.labels = data['labels']
         else:
             data = pickle.load(open("./Data/synth_data.pickle", 'rb'))
             self.all_data = data['data']
@@ -51,9 +48,28 @@ class TS_dataset(Dataset):
     def process_gm_re(self):
         array_data = np.vstack(self.data.iloc[:,1].values)
         standscaler = StandardScaler()
-        self.all_data = standscaler.fit_transform(array_data)
-        self.all_data = np.expand_dims(self.all_data, axis=2)
-        self.labels = self.data['labels'].values
+        d_array  = standscaler.fit_transform(array_data)
+        d_array  = np.expand_dims(d_array , axis=2)
+        # Init output arrays
+        label_array  = self.data['labels'].values
+        self.all_data = np.array([])
+        self.labels = np.array([])
+        for index in range(d_array.shape[0] - self.timesteps + 1):
+            this_array = d_array[index:index + self.timesteps].reshape((-1, self.timesteps, len(self.columns)))
+            timesteps_label = label_array[index:index + self.timesteps]
+            if np.any(timesteps_label == 1):  # If any single observation in snippet is defect, the snippet is defect.
+                this_label = 1
+            else:
+                this_label = 0
+            if self.all_data.shape[0] == 0:
+                self.all_data = this_array
+                self.labels = this_label
+            else:
+                self.all_data = np.concatenate([self.all_data, this_array], axis=0)
+                self.labels = np.append(self.labels, this_label)
+
+
+    
     def __len__(self):
         return len(self.labels)
 

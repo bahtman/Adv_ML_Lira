@@ -38,7 +38,7 @@ config = DotMap(hyperparameter_defaults)
 wandb.init(config = hyperparameter_defaults,project="VRAE")
 config = wandb.config
 args = DotMap(dict(
-    seq_len=369,
+    seq_len=seq_len,
     n_features = n_features,
     batch_size = config.batch_size,
     n_epochs = config.n_epochs,
