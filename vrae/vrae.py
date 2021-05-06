@@ -206,7 +206,7 @@ class VRAE(BaseEstimator, nn.Module):
                                output_size=number_of_features,
                                block=block,
                                dtype=self.dtype)
-        self.means = nn.Linear(sequence_length, hidden_size)
+        #self.means = nn.Linear(sequence_length, hidden_size)
         self.sequence_length = sequence_length
         self.hidden_size = hidden_size
         self.hidden_layer_depth = hidden_layer_depth
