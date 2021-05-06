@@ -17,7 +17,6 @@ val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
 test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
 
-
 hyperparameter_defaults = dict(
         hidden_size = 90, 
         hidden_layer_depth = 2,
@@ -47,8 +46,8 @@ args = DotMap(dict(
     results_file = 'result.txt',
     output_dir = 'results',
     visualize=True,
-    train = True,
-    detectOutliers = False
+    train = False,
+    detectOutliers = True
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -75,16 +74,17 @@ vrae = VRAE(sequence_length=args.seq_len,
 if args.train:
     print('Training VRAE model')
     vrae.fit(train,val, save=True)
+else:
+    vrae.load('model_gaus.pth')
 
 if args.detectOutliers: 
     print("Detecting outliers")
-    vrae.load('vrae/models/model.pth')
     from vrae.detect import detect
     detect(vrae, test, args.device)
 
 if args.visualize:
     print("Visualizing validation set with VRAE")
-    x_decoded = vrae.reconstruct(val)
+    x_decoded = vrae.reconstruct(test)
 
     with torch.no_grad():  
         n_plots = 5
