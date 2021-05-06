@@ -36,7 +36,6 @@ class TS_dataset(Dataset):
 
         if type=='train':
             self.all_data = train_data
-            print(train_data)
             self.labels = train_label
         elif type=='val':
             self.all_data = val_data

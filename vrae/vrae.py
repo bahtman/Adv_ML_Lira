@@ -496,7 +496,7 @@ class VRAE(BaseEstimator, nn.Module):
 
         test_loader = DataLoader(dataset = dataset,
                                  batch_size = self.batch_size,
-                                 shuffle = False,
+                                 shuffle = True,
                                  drop_last=True) # Don't shuffle for test_loader
 
         if self.is_fitted:
