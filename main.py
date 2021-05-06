@@ -76,8 +76,10 @@ vrae = VRAE(sequence_length=args.seq_len,
 if args.train:
     print('Training VRAE model')
     vrae.fit(train,val, save=True)
-else:
-    vrae.load('model_gaus.pth')
+elif args.prior == 'standard':
+    vrae.load('vrae/models/model_gaus.pth')
+elif args.prior == 'vampprior':
+    vrae.load('vrae/models/model_vamp.pth')
 
 if args.detectOutliers: 
     print("Detecting outliers")
