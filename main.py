@@ -16,6 +16,8 @@ train = TS_dataset(timesteps=seq_len,columns=columns,type='train')
 val = TS_dataset(timesteps=seq_len,columns=columns,type='val')
 test = TS_dataset(timesteps=seq_len,columns=columns,type='test')
 n_features= len(columns)
+
+
 hyperparameter_defaults = dict(
         hidden_size = 115, 
         hidden_layer_depth = 2,
@@ -45,8 +47,9 @@ args = DotMap(dict(
     results_file = 'result.txt',
     output_dir = 'results',
     visualize=False,
-    train = False,
-    detectOutliers = True,
+    
+    train = True,
+    detectOutliers = False,
     prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
