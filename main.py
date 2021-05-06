@@ -25,7 +25,7 @@ n_features= len(columns)
 hyperparameter_defaults = dict(
         hidden_size = 90, 
         hidden_layer_depth = 2,
-        latent_length = 40,
+        latent_length = 20,
         batch_size = 32,
         learning_rate = 0.0005,
         n_epochs = 20,
@@ -52,7 +52,8 @@ args = DotMap(dict(
     output_dir = 'results',
     visualize=False,
     train = True,
-    detectOutliers = False
+    detectOutliers = False,
+    prior='vampprior'
 ))
 args.device = True if torch.cuda.is_available() else False
 torch.manual_seed(args.seed)
@@ -74,7 +75,8 @@ vrae = VRAE(sequence_length=args.seq_len,
             max_grad_norm=config.max_grad_norm,
             loss = args.loss,
             block = args.block,
-            plot_loss = args.visualize)
+            plot_loss = args.visualize,
+            prior = args.prior)
 
 if args.train:
     print('Training VRAE model')

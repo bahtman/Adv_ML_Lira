@@ -13,7 +13,6 @@ class TS_dataset(Dataset):
         
         self.timesteps = timesteps
         if datafile:
-            print("Hej")
             data = pickle.load(open(datafile, 'rb'))
             data['labels'] = data['IRI_mean'].apply(lambda x: 0 if x <= 2 else 1)
             #data = data[data.labels==1]
@@ -21,20 +20,13 @@ class TS_dataset(Dataset):
             self.data = data
             self.process_gm_re()
         else:
-            print("Hej 2")
             data = pickle.load(open("./Data/synth_data.pickle", 'rb'))
-            print("data['data']",data['data'])
             self.all_data = data['data']
             self.labels = data['labels']
-            print("Length of labels = ", len(self.labels), "and sum of labels = ", sum(self.labels))
-            print("self.labels",self.labels)
         anomaly_y = self.all_data[self.labels==1]
-        print("anomaly_y", anomaly_y)
         anomaly_n = self.all_data[self.labels==0]
-        print("anomaly_n",anomaly_n)
         label_y = self.labels[self.labels==1]
         label_n = self.labels[self.labels==0]
-        print("label_n = ", label_n)
         indices = sample(range(anomaly_n.shape[0]),int(anomaly_n.shape[0]*0.6))
         train_data, train_label = anomaly_n[indices,:,:], label_n[indices]
         rest_data, rest_label = np.delete(anomaly_n,indices,axis=0), np.delete(label_n,indices)
